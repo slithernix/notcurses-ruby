@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative "lib/notcurses/version"
-require 'pry'
 Gem::Specification.new do |spec|
   spec.name = "notcurses"
   spec.version = Notcurses::VERSION
@@ -23,7 +22,6 @@ Gem::Specification.new do |spec|
     end
   end
 
-  binding.pry
   spec.bindir = "exe"
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.extensions = ["ext/notcurses/extconf.rb"]

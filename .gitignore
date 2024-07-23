@@ -5,6 +5,9 @@
 *.tar
 *.gpg
 *.pgp
+*.gem
+
+pkg/*
 
 # Compiled Objects
 *.so
