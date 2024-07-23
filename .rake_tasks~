@@ -1,0 +1,11 @@
+build
+build:checksum
+clean
+clobber
+install
+install:local
+release[remote]
+rubocop
+rubocop:autocorrect
+rubocop:autocorrect_all
+test

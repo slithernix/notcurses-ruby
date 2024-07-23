@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+require_relative './notcurses.so'
+
+puts "Loaded Notcurses version #{Notcurses.notcurses_version}"
