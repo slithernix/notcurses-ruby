@@ -1,11 +1,40 @@
+# Archives
+*.tgz
+*.tar.gz
+*.zip
+*.tar
+*.gpg
+*.pgp
+
+# Compiled Objects
+*.so
+*.o
+
+# History Files
+.*history
+
+# Logs
+*.log
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ruby
 /.bundle/
 /.yardoc
 /_yardoc/
 /coverage/
-/doc/
-/pkg/
 /spec/reports/
-/tmp/
-*.log
-*.so
-*.o
+
+# Vim Temp Files
+*~
+.[a-z][a-z]
+.[a-z][a-z][a-z]
+*.un~
+.netrwhist
+
+# JetBrains
+.idea
+

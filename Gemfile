@@ -2,11 +2,19 @@
 
 source "https://rubygems.org"
 
-# Specify your gem's dependencies in notcurses.gemspec
 gemspec
 
-gem "rake", "~> 13.0"
+group :development, :test do
+  gem 'bundler', '~> 2.0'
+  gem 'debug', '>= 1.9.2'
+  gem "minitest", "~> 5.0"
+  gem 'pry', '>= 0.14.2'
+  gem 'pry-doc', '>= 1.4.0'
+  gem 'pry-nav', '>= 1.0.0'
+  gem 'pry-remote', '>= 0.1.8'
+  gem 'pry-rescue', '>= 1.5.2'
+  gem 'pry-theme', '>= 1.3.1'
+  gem 'rake', '>= 1.64.1'
+  gem 'rubocop', '~> 1.64.0'
+end
 
-gem "minitest", "~> 5.0"
-
-gem "rubocop", "~> 1.21"
