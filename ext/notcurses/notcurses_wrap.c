@@ -2324,6 +2324,57 @@ static const char* get_file_mode(int fd) {
 }
 
 
+#include <notcurses/notcurses.h>
+
+// Function equivalent of NCCHANNEL_INITIALIZER macro
+uint32_t ncchannel_initializer(
+  uint32_t r,
+  uint32_t g,
+  uint32_t b
+) {
+  return ((r << 16u) + (g << 8u) + b + NC_BGDEFAULT_MASK);
+}
+
+// Function equivalent of NCCHANNELS_INITIALIZER macro
+uint64_t ncchannels_initializer(
+  uint32_t fr,
+  uint32_t fg,
+  uint32_t fb,
+  uint32_t br,
+  uint32_t bg,
+  uint32_t bb
+) {
+
+  uint64_t tmp_fg_chan = ((uint64_t)ncchannel_initializer(fr, fg, fb) << 32ull);
+  uint64_t tmp_bg_chan = ncchannel_initializer(br, bg, bb);
+
+  return tmp_fg_chan + tmp_bg_chan;
+}
+
+
+SWIGINTERN int
+SWIG_AsVal_unsigned_SS_int (VALUE obj, unsigned int *val)
+{
+  unsigned long v;
+  int res = SWIG_AsVal_unsigned_SS_long (obj, &v);
+  if (SWIG_IsOK(res)) {
+    if ((v > UINT_MAX)) {
+      return SWIG_OverflowError;
+    } else {
+      if (val) *val = (unsigned int)(v);
+    }
+  }  
+  return res;
+}
+
+
+SWIGINTERNINLINE VALUE
+SWIG_From_unsigned_SS_int  (unsigned int value)
+{    
+  return SWIG_From_unsigned_SS_long  (value);
+}
+
+
 #include "version.h"
 #include "nckeys.h"
 #include "ncseqs.h"
@@ -2343,22 +2394,6 @@ SWIGINTERNINLINE VALUE
 SWIG_From_int  (int value)
 {    
   return SWIG_From_long  (value);
-}
-
-
-SWIGINTERN int
-SWIG_AsVal_unsigned_SS_int (VALUE obj, unsigned int *val)
-{
-  unsigned long v;
-  int res = SWIG_AsVal_unsigned_SS_long (obj, &v);
-  if (SWIG_IsOK(res)) {
-    if ((v > UINT_MAX)) {
-      return SWIG_OverflowError;
-    } else {
-      if (val) *val = (unsigned int)(v);
-    }
-  }  
-  return res;
 }
 
 
@@ -2434,13 +2469,6 @@ SWIG_From_unsigned_SS_long_SS_long  (unsigned long long value)
   return ULL2NUM(value);
 }
 #endif
-
-
-SWIGINTERNINLINE VALUE
-SWIG_From_unsigned_SS_int  (unsigned int value)
-{    
-  return SWIG_From_unsigned_SS_long  (value);
-}
 
 
 SWIGINTERNINLINE VALUE
@@ -3526,6 +3554,110 @@ _wrap_fmod(int argc, VALUE *argv, VALUE self) {
   arg2 = (double)(val2);
   result = (double)fmod(arg1,arg2);
   vresult = SWIG_From_double((double)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncchannel_initializer(int argc, VALUE *argv, VALUE self) {
+  uint32_t arg1 ;
+  uint32_t arg2 ;
+  uint32_t arg3 ;
+  unsigned int val1 ;
+  int ecode1 = 0 ;
+  unsigned int val2 ;
+  int ecode2 = 0 ;
+  unsigned int val3 ;
+  int ecode3 = 0 ;
+  uint32_t result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 3) || (argc > 3)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 3)",argc); SWIG_fail;
+  }
+  ecode1 = SWIG_AsVal_unsigned_SS_int(argv[0], &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), Ruby_Format_TypeError( "", "uint32_t","ncchannel_initializer", 1, argv[0] ));
+  } 
+  arg1 = (uint32_t)(val1);
+  ecode2 = SWIG_AsVal_unsigned_SS_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "uint32_t","ncchannel_initializer", 2, argv[1] ));
+  } 
+  arg2 = (uint32_t)(val2);
+  ecode3 = SWIG_AsVal_unsigned_SS_int(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "uint32_t","ncchannel_initializer", 3, argv[2] ));
+  } 
+  arg3 = (uint32_t)(val3);
+  result = (uint32_t)ncchannel_initializer(arg1,arg2,arg3);
+  vresult = SWIG_From_unsigned_SS_int((unsigned int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncchannels_initializer(int argc, VALUE *argv, VALUE self) {
+  uint32_t arg1 ;
+  uint32_t arg2 ;
+  uint32_t arg3 ;
+  uint32_t arg4 ;
+  uint32_t arg5 ;
+  uint32_t arg6 ;
+  unsigned int val1 ;
+  int ecode1 = 0 ;
+  unsigned int val2 ;
+  int ecode2 = 0 ;
+  unsigned int val3 ;
+  int ecode3 = 0 ;
+  unsigned int val4 ;
+  int ecode4 = 0 ;
+  unsigned int val5 ;
+  int ecode5 = 0 ;
+  unsigned int val6 ;
+  int ecode6 = 0 ;
+  uint64_t result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 6) || (argc > 6)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 6)",argc); SWIG_fail;
+  }
+  ecode1 = SWIG_AsVal_unsigned_SS_int(argv[0], &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), Ruby_Format_TypeError( "", "uint32_t","ncchannels_initializer", 1, argv[0] ));
+  } 
+  arg1 = (uint32_t)(val1);
+  ecode2 = SWIG_AsVal_unsigned_SS_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "uint32_t","ncchannels_initializer", 2, argv[1] ));
+  } 
+  arg2 = (uint32_t)(val2);
+  ecode3 = SWIG_AsVal_unsigned_SS_int(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "uint32_t","ncchannels_initializer", 3, argv[2] ));
+  } 
+  arg3 = (uint32_t)(val3);
+  ecode4 = SWIG_AsVal_unsigned_SS_int(argv[3], &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "uint32_t","ncchannels_initializer", 4, argv[3] ));
+  } 
+  arg4 = (uint32_t)(val4);
+  ecode5 = SWIG_AsVal_unsigned_SS_int(argv[4], &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "uint32_t","ncchannels_initializer", 5, argv[4] ));
+  } 
+  arg5 = (uint32_t)(val5);
+  ecode6 = SWIG_AsVal_unsigned_SS_int(argv[5], &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), Ruby_Format_TypeError( "", "uint32_t","ncchannels_initializer", 6, argv[5] ));
+  } 
+  arg6 = (uint32_t)(val6);
+  result = (uint64_t)ncchannels_initializer(arg1,arg2,arg3,arg4,arg5,arg6);
+  vresult = SWIG_From_unsigned_SS_long((unsigned long)(result));
   return vresult;
 fail:
   return Qnil;
@@ -8071,7 +8203,7 @@ fail:
 static swig_class SwigClassNccell;
 
 SWIGINTERN VALUE
-_wrap_nccell_gcluster_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccell_gcluster_set(int argc, VALUE *argv, VALUE self) {
   struct nccell *arg1 = (struct nccell *) 0 ;
   uint32_t arg2 ;
   void *argp1 = 0 ;
@@ -8100,7 +8232,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccell_gcluster_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccell_gcluster_get(int argc, VALUE *argv, VALUE self) {
   struct nccell *arg1 = (struct nccell *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -8124,7 +8256,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccell_gcluster_backstop_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccell_gcluster_backstop_set(int argc, VALUE *argv, VALUE self) {
   struct nccell *arg1 = (struct nccell *) 0 ;
   uint8_t arg2 ;
   void *argp1 = 0 ;
@@ -8153,7 +8285,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccell_gcluster_backstop_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccell_gcluster_backstop_get(int argc, VALUE *argv, VALUE self) {
   struct nccell *arg1 = (struct nccell *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -8177,7 +8309,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccell_width_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccell_width_set(int argc, VALUE *argv, VALUE self) {
   struct nccell *arg1 = (struct nccell *) 0 ;
   uint8_t arg2 ;
   void *argp1 = 0 ;
@@ -8206,7 +8338,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccell_width_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccell_width_get(int argc, VALUE *argv, VALUE self) {
   struct nccell *arg1 = (struct nccell *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -8230,7 +8362,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccell_stylemask_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccell_stylemask_set(int argc, VALUE *argv, VALUE self) {
   struct nccell *arg1 = (struct nccell *) 0 ;
   uint16_t arg2 ;
   void *argp1 = 0 ;
@@ -8259,7 +8391,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccell_stylemask_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccell_stylemask_get(int argc, VALUE *argv, VALUE self) {
   struct nccell *arg1 = (struct nccell *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -8283,7 +8415,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccell_channels_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccell_channels_set(int argc, VALUE *argv, VALUE self) {
   struct nccell *arg1 = (struct nccell *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -8312,7 +8444,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccell_channels_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccell_channels_get(int argc, VALUE *argv, VALUE self) {
   struct nccell *arg1 = (struct nccell *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -8337,9 +8469,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_nccell_allocate(VALUE self)
+_wrap_Nccell_allocate(VALUE self)
 #else
-_wrap_nccell_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_Nccell_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_nccell);
@@ -8351,7 +8483,7 @@ _wrap_nccell_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_nccell(int argc, VALUE *argv, VALUE self) {
+_wrap_new_Nccell(int argc, VALUE *argv, VALUE self) {
   struct nccell *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -9340,10 +9472,10 @@ fail:
 }
 
 
-static swig_class SwigClassNotcurses_options;
+static swig_class SwigClassNotcursesOptions;
 
 SWIGINTERN VALUE
-_wrap_notcurses_options_termtype_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NotcursesOptions_termtype_set(int argc, VALUE *argv, VALUE self) {
   struct notcurses_options *arg1 = (struct notcurses_options *) 0 ;
   char *arg2 = (char *) 0 ;
   void *argp1 = 0 ;
@@ -9386,7 +9518,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_notcurses_options_termtype_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NotcursesOptions_termtype_get(int argc, VALUE *argv, VALUE self) {
   struct notcurses_options *arg1 = (struct notcurses_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -9410,7 +9542,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_notcurses_options_loglevel_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NotcursesOptions_loglevel_set(int argc, VALUE *argv, VALUE self) {
   struct notcurses_options *arg1 = (struct notcurses_options *) 0 ;
   ncloglevel_e arg2 ;
   void *argp1 = 0 ;
@@ -9439,7 +9571,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_notcurses_options_loglevel_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NotcursesOptions_loglevel_get(int argc, VALUE *argv, VALUE self) {
   struct notcurses_options *arg1 = (struct notcurses_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -9463,7 +9595,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_notcurses_options_margin_t_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NotcursesOptions_margin_t_set(int argc, VALUE *argv, VALUE self) {
   struct notcurses_options *arg1 = (struct notcurses_options *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -9492,7 +9624,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_notcurses_options_margin_t_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NotcursesOptions_margin_t_get(int argc, VALUE *argv, VALUE self) {
   struct notcurses_options *arg1 = (struct notcurses_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -9516,7 +9648,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_notcurses_options_margin_r_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NotcursesOptions_margin_r_set(int argc, VALUE *argv, VALUE self) {
   struct notcurses_options *arg1 = (struct notcurses_options *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -9545,7 +9677,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_notcurses_options_margin_r_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NotcursesOptions_margin_r_get(int argc, VALUE *argv, VALUE self) {
   struct notcurses_options *arg1 = (struct notcurses_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -9569,7 +9701,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_notcurses_options_margin_b_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NotcursesOptions_margin_b_set(int argc, VALUE *argv, VALUE self) {
   struct notcurses_options *arg1 = (struct notcurses_options *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -9598,7 +9730,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_notcurses_options_margin_b_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NotcursesOptions_margin_b_get(int argc, VALUE *argv, VALUE self) {
   struct notcurses_options *arg1 = (struct notcurses_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -9622,7 +9754,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_notcurses_options_margin_l_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NotcursesOptions_margin_l_set(int argc, VALUE *argv, VALUE self) {
   struct notcurses_options *arg1 = (struct notcurses_options *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -9651,7 +9783,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_notcurses_options_margin_l_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NotcursesOptions_margin_l_get(int argc, VALUE *argv, VALUE self) {
   struct notcurses_options *arg1 = (struct notcurses_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -9675,7 +9807,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_notcurses_options_flags_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NotcursesOptions_flags_set(int argc, VALUE *argv, VALUE self) {
   struct notcurses_options *arg1 = (struct notcurses_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -9704,7 +9836,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_notcurses_options_flags_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NotcursesOptions_flags_get(int argc, VALUE *argv, VALUE self) {
   struct notcurses_options *arg1 = (struct notcurses_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -9729,9 +9861,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_notcurses_options_allocate(VALUE self)
+_wrap_NotcursesOptions_allocate(VALUE self)
 #else
-_wrap_notcurses_options_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_NotcursesOptions_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_notcurses_options);
@@ -9743,7 +9875,7 @@ _wrap_notcurses_options_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_notcurses_options(int argc, VALUE *argv, VALUE self) {
+_wrap_new_NotcursesOptions(int argc, VALUE *argv, VALUE self) {
   struct notcurses_options *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -10424,7 +10556,7 @@ fail:
 static swig_class SwigClassNcinput;
 
 SWIGINTERN VALUE
-_wrap_ncinput_id_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_id_set(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   uint32_t arg2 ;
   void *argp1 = 0 ;
@@ -10453,7 +10585,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncinput_id_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_id_get(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -10477,7 +10609,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncinput_y_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_y_set(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   int arg2 ;
   void *argp1 = 0 ;
@@ -10506,7 +10638,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncinput_y_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_y_get(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -10530,7 +10662,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncinput_x_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_x_set(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   int arg2 ;
   void *argp1 = 0 ;
@@ -10559,7 +10691,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncinput_x_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_x_get(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -10583,7 +10715,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncinput_utf8_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_utf8_set(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   char *arg2 ;
   void *argp1 = 0 ;
@@ -10613,7 +10745,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncinput_utf8_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_utf8_get(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -10643,7 +10775,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncinput_alt_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_alt_set(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   bool arg2 ;
   void *argp1 = 0 ;
@@ -10672,7 +10804,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncinput_alt_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_alt_get(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -10696,23 +10828,23 @@ fail:
 
 
 /*
-  Document-method: Notcurses::ncinput.shift
+  Document-method: Notcurses::Ncinput.shift
 
   call-seq:
     shift -> bool
 
-Remove and return element at the beginning of the ncinput.
+Remove and return element at the beginning of the Ncinput.
 */
 /*
-  Document-method: Notcurses::ncinput.shift=
+  Document-method: Notcurses::Ncinput.shift=
 
   call-seq:
     shift=(x) -> bool
 
-Remove and return element at the beginning of the ncinput.
+Remove and return element at the beginning of the Ncinput.
 */
 SWIGINTERN VALUE
-_wrap_ncinput_shift_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_shift_set(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   bool arg2 ;
   void *argp1 = 0 ;
@@ -10741,7 +10873,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncinput_shift_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_shift_get(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -10765,7 +10897,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncinput_ctrl_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_ctrl_set(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   bool arg2 ;
   void *argp1 = 0 ;
@@ -10794,7 +10926,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncinput_ctrl_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_ctrl_get(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -10818,7 +10950,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncinput_evtype_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_evtype_set(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   ncintype_e arg2 ;
   void *argp1 = 0 ;
@@ -10847,7 +10979,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncinput_evtype_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_evtype_get(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -10871,7 +11003,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncinput_modifiers_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_modifiers_set(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -10900,7 +11032,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncinput_modifiers_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_modifiers_get(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -10924,7 +11056,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncinput_ypx_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_ypx_set(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   int arg2 ;
   void *argp1 = 0 ;
@@ -10953,7 +11085,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncinput_ypx_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_ypx_get(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -10977,7 +11109,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncinput_xpx_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_xpx_set(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   int arg2 ;
   void *argp1 = 0 ;
@@ -11006,7 +11138,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncinput_xpx_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncinput_xpx_get(int argc, VALUE *argv, VALUE self) {
   struct ncinput *arg1 = (struct ncinput *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -11031,9 +11163,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_ncinput_allocate(VALUE self)
+_wrap_Ncinput_allocate(VALUE self)
 #else
-_wrap_ncinput_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_Ncinput_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_ncinput);
@@ -11045,7 +11177,7 @@ _wrap_ncinput_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_ncinput(int argc, VALUE *argv, VALUE self) {
+_wrap_new_Ncinput(int argc, VALUE *argv, VALUE self) {
   struct ncinput *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -12068,10 +12200,10 @@ fail:
 }
 
 
-static swig_class SwigClassNcplane_options;
+static swig_class SwigClassNcplaneOptions;
 
 SWIGINTERN VALUE
-_wrap_ncplane_options_y_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplaneOptions_y_set(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *arg1 = (struct ncplane_options *) 0 ;
   int arg2 ;
   void *argp1 = 0 ;
@@ -12100,7 +12232,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplane_options_y_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplaneOptions_y_get(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *arg1 = (struct ncplane_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -12124,7 +12256,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplane_options_x_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplaneOptions_x_set(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *arg1 = (struct ncplane_options *) 0 ;
   int arg2 ;
   void *argp1 = 0 ;
@@ -12153,7 +12285,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplane_options_x_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplaneOptions_x_get(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *arg1 = (struct ncplane_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -12177,7 +12309,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplane_options_rows_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplaneOptions_rows_set(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *arg1 = (struct ncplane_options *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -12206,7 +12338,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplane_options_rows_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplaneOptions_rows_get(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *arg1 = (struct ncplane_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -12230,7 +12362,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplane_options_cols_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplaneOptions_cols_set(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *arg1 = (struct ncplane_options *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -12259,7 +12391,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplane_options_cols_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplaneOptions_cols_get(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *arg1 = (struct ncplane_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -12283,7 +12415,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplane_options_userptr_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplaneOptions_userptr_set(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *arg1 = (struct ncplane_options *) 0 ;
   void *arg2 = (void *) 0 ;
   void *argp1 = 0 ;
@@ -12310,7 +12442,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplane_options_userptr_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplaneOptions_userptr_get(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *arg1 = (struct ncplane_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -12334,7 +12466,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplane_options_name_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplaneOptions_name_set(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *arg1 = (struct ncplane_options *) 0 ;
   char *arg2 = (char *) 0 ;
   void *argp1 = 0 ;
@@ -12377,7 +12509,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplane_options_name_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplaneOptions_name_get(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *arg1 = (struct ncplane_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -12401,7 +12533,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplane_options_resizecb_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplaneOptions_resizecb_set(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *arg1 = (struct ncplane_options *) 0 ;
   int (*arg2)(struct ncplane *) = (int (*)(struct ncplane *)) 0 ;
   void *argp1 = 0 ;
@@ -12429,7 +12561,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplane_options_resizecb_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplaneOptions_resizecb_get(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *arg1 = (struct ncplane_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -12453,7 +12585,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplane_options_flags_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplaneOptions_flags_set(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *arg1 = (struct ncplane_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -12482,7 +12614,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplane_options_flags_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplaneOptions_flags_get(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *arg1 = (struct ncplane_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -12506,7 +12638,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplane_options_margin_b_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplaneOptions_margin_b_set(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *arg1 = (struct ncplane_options *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -12535,7 +12667,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplane_options_margin_b_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplaneOptions_margin_b_get(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *arg1 = (struct ncplane_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -12559,7 +12691,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplane_options_margin_r_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplaneOptions_margin_r_set(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *arg1 = (struct ncplane_options *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -12588,7 +12720,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplane_options_margin_r_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplaneOptions_margin_r_get(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *arg1 = (struct ncplane_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -12613,9 +12745,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_ncplane_options_allocate(VALUE self)
+_wrap_NcplaneOptions_allocate(VALUE self)
 #else
-_wrap_ncplane_options_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_NcplaneOptions_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_ncplane_options);
@@ -12627,7 +12759,7 @@ _wrap_ncplane_options_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_ncplane_options(int argc, VALUE *argv, VALUE self) {
+_wrap_new_NcplaneOptions(int argc, VALUE *argv, VALUE self) {
   struct ncplane_options *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -13231,7 +13363,7 @@ fail:
 static swig_class SwigClassNcpalette;
 
 SWIGINTERN VALUE
-_wrap_ncpalette_chans_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncpalette_chans_set(int argc, VALUE *argv, VALUE self) {
   struct ncpalette *arg1 = (struct ncpalette *) 0 ;
   uint32_t *arg2 ;
   void *argp1 = 0 ;
@@ -13267,7 +13399,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncpalette_chans_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncpalette_chans_get(int argc, VALUE *argv, VALUE self) {
   struct ncpalette *arg1 = (struct ncpalette *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -13292,9 +13424,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_ncpalette_allocate(VALUE self)
+_wrap_Ncpalette_allocate(VALUE self)
 #else
-_wrap_ncpalette_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_Ncpalette_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_ncpalette);
@@ -13306,7 +13438,7 @@ _wrap_ncpalette_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_ncpalette(int argc, VALUE *argv, VALUE self) {
+_wrap_new_Ncpalette(int argc, VALUE *argv, VALUE self) {
   struct ncpalette *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -13610,7 +13742,7 @@ fail:
 static swig_class SwigClassNccapabilities;
 
 SWIGINTERN VALUE
-_wrap_nccapabilities_colors_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccapabilities_colors_set(int argc, VALUE *argv, VALUE self) {
   struct nccapabilities *arg1 = (struct nccapabilities *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -13639,7 +13771,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccapabilities_colors_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccapabilities_colors_get(int argc, VALUE *argv, VALUE self) {
   struct nccapabilities *arg1 = (struct nccapabilities *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -13663,7 +13795,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccapabilities_utf8_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccapabilities_utf8_set(int argc, VALUE *argv, VALUE self) {
   struct nccapabilities *arg1 = (struct nccapabilities *) 0 ;
   bool arg2 ;
   void *argp1 = 0 ;
@@ -13692,7 +13824,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccapabilities_utf8_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccapabilities_utf8_get(int argc, VALUE *argv, VALUE self) {
   struct nccapabilities *arg1 = (struct nccapabilities *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -13716,7 +13848,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccapabilities_rgb_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccapabilities_rgb_set(int argc, VALUE *argv, VALUE self) {
   struct nccapabilities *arg1 = (struct nccapabilities *) 0 ;
   bool arg2 ;
   void *argp1 = 0 ;
@@ -13745,7 +13877,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccapabilities_rgb_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccapabilities_rgb_get(int argc, VALUE *argv, VALUE self) {
   struct nccapabilities *arg1 = (struct nccapabilities *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -13769,7 +13901,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccapabilities_can_change_colors_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccapabilities_can_change_colors_set(int argc, VALUE *argv, VALUE self) {
   struct nccapabilities *arg1 = (struct nccapabilities *) 0 ;
   bool arg2 ;
   void *argp1 = 0 ;
@@ -13798,7 +13930,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccapabilities_can_change_colors_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccapabilities_can_change_colors_get(int argc, VALUE *argv, VALUE self) {
   struct nccapabilities *arg1 = (struct nccapabilities *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -13822,7 +13954,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccapabilities_halfblocks_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccapabilities_halfblocks_set(int argc, VALUE *argv, VALUE self) {
   struct nccapabilities *arg1 = (struct nccapabilities *) 0 ;
   bool arg2 ;
   void *argp1 = 0 ;
@@ -13851,7 +13983,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccapabilities_halfblocks_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccapabilities_halfblocks_get(int argc, VALUE *argv, VALUE self) {
   struct nccapabilities *arg1 = (struct nccapabilities *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -13875,7 +14007,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccapabilities_quadrants_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccapabilities_quadrants_set(int argc, VALUE *argv, VALUE self) {
   struct nccapabilities *arg1 = (struct nccapabilities *) 0 ;
   bool arg2 ;
   void *argp1 = 0 ;
@@ -13904,7 +14036,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccapabilities_quadrants_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccapabilities_quadrants_get(int argc, VALUE *argv, VALUE self) {
   struct nccapabilities *arg1 = (struct nccapabilities *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -13928,7 +14060,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccapabilities_sextants_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccapabilities_sextants_set(int argc, VALUE *argv, VALUE self) {
   struct nccapabilities *arg1 = (struct nccapabilities *) 0 ;
   bool arg2 ;
   void *argp1 = 0 ;
@@ -13957,7 +14089,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccapabilities_sextants_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccapabilities_sextants_get(int argc, VALUE *argv, VALUE self) {
   struct nccapabilities *arg1 = (struct nccapabilities *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -13981,7 +14113,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccapabilities_braille_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccapabilities_braille_set(int argc, VALUE *argv, VALUE self) {
   struct nccapabilities *arg1 = (struct nccapabilities *) 0 ;
   bool arg2 ;
   void *argp1 = 0 ;
@@ -14010,7 +14142,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nccapabilities_braille_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Nccapabilities_braille_get(int argc, VALUE *argv, VALUE self) {
   struct nccapabilities *arg1 = (struct nccapabilities *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -14035,9 +14167,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_nccapabilities_allocate(VALUE self)
+_wrap_Nccapabilities_allocate(VALUE self)
 #else
-_wrap_nccapabilities_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_Nccapabilities_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_nccapabilities);
@@ -14049,7 +14181,7 @@ _wrap_nccapabilities_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_nccapabilities(int argc, VALUE *argv, VALUE self) {
+_wrap_new_Nccapabilities(int argc, VALUE *argv, VALUE self) {
   struct nccapabilities *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -14480,7 +14612,7 @@ fail:
 static swig_class SwigClassNcstats;
 
 SWIGINTERN VALUE
-_wrap_ncstats_renders_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_renders_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -14509,7 +14641,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_renders_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_renders_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -14533,7 +14665,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_writeouts_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_writeouts_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -14562,7 +14694,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_writeouts_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_writeouts_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -14586,7 +14718,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_failed_renders_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_failed_renders_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -14615,7 +14747,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_failed_renders_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_failed_renders_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -14639,7 +14771,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_failed_writeouts_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_failed_writeouts_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -14668,7 +14800,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_failed_writeouts_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_failed_writeouts_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -14692,7 +14824,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_raster_bytes_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_raster_bytes_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -14721,7 +14853,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_raster_bytes_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_raster_bytes_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -14745,7 +14877,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_raster_max_bytes_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_raster_max_bytes_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   int64_t arg2 ;
   void *argp1 = 0 ;
@@ -14774,7 +14906,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_raster_max_bytes_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_raster_max_bytes_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -14798,7 +14930,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_raster_min_bytes_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_raster_min_bytes_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   int64_t arg2 ;
   void *argp1 = 0 ;
@@ -14827,7 +14959,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_raster_min_bytes_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_raster_min_bytes_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -14851,7 +14983,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_render_ns_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_render_ns_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -14880,7 +15012,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_render_ns_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_render_ns_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -14904,7 +15036,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_render_max_ns_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_render_max_ns_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   int64_t arg2 ;
   void *argp1 = 0 ;
@@ -14933,7 +15065,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_render_max_ns_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_render_max_ns_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -14957,7 +15089,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_render_min_ns_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_render_min_ns_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   int64_t arg2 ;
   void *argp1 = 0 ;
@@ -14986,7 +15118,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_render_min_ns_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_render_min_ns_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -15010,7 +15142,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_raster_ns_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_raster_ns_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -15039,7 +15171,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_raster_ns_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_raster_ns_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -15063,7 +15195,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_raster_max_ns_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_raster_max_ns_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   int64_t arg2 ;
   void *argp1 = 0 ;
@@ -15092,7 +15224,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_raster_max_ns_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_raster_max_ns_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -15116,7 +15248,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_raster_min_ns_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_raster_min_ns_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   int64_t arg2 ;
   void *argp1 = 0 ;
@@ -15145,7 +15277,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_raster_min_ns_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_raster_min_ns_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -15169,7 +15301,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_writeout_ns_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_writeout_ns_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -15198,7 +15330,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_writeout_ns_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_writeout_ns_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -15222,7 +15354,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_writeout_max_ns_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_writeout_max_ns_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   int64_t arg2 ;
   void *argp1 = 0 ;
@@ -15251,7 +15383,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_writeout_max_ns_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_writeout_max_ns_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -15275,7 +15407,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_writeout_min_ns_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_writeout_min_ns_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   int64_t arg2 ;
   void *argp1 = 0 ;
@@ -15304,7 +15436,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_writeout_min_ns_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_writeout_min_ns_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -15328,7 +15460,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_cellelisions_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_cellelisions_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -15357,7 +15489,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_cellelisions_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_cellelisions_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -15381,7 +15513,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_cellemissions_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_cellemissions_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -15410,7 +15542,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_cellemissions_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_cellemissions_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -15434,7 +15566,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_fgelisions_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_fgelisions_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -15463,7 +15595,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_fgelisions_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_fgelisions_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -15487,7 +15619,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_fgemissions_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_fgemissions_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -15516,7 +15648,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_fgemissions_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_fgemissions_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -15540,7 +15672,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_bgelisions_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_bgelisions_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -15569,7 +15701,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_bgelisions_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_bgelisions_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -15593,7 +15725,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_bgemissions_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_bgemissions_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -15622,7 +15754,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_bgemissions_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_bgemissions_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -15646,7 +15778,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_defaultelisions_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_defaultelisions_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -15675,7 +15807,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_defaultelisions_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_defaultelisions_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -15699,7 +15831,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_defaultemissions_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_defaultemissions_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -15728,7 +15860,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_defaultemissions_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_defaultemissions_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -15752,7 +15884,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_refreshes_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_refreshes_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -15781,7 +15913,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_refreshes_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_refreshes_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -15805,7 +15937,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_sprixelemissions_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_sprixelemissions_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -15834,7 +15966,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_sprixelemissions_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_sprixelemissions_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -15858,7 +15990,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_sprixelelisions_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_sprixelelisions_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -15887,7 +16019,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_sprixelelisions_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_sprixelelisions_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -15911,7 +16043,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_sprixelbytes_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_sprixelbytes_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -15940,7 +16072,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_sprixelbytes_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_sprixelbytes_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -15964,7 +16096,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_appsync_updates_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_appsync_updates_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -15993,7 +16125,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_appsync_updates_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_appsync_updates_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -16017,7 +16149,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_input_errors_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_input_errors_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -16046,7 +16178,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_input_errors_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_input_errors_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -16070,7 +16202,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_input_events_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_input_events_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -16099,7 +16231,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_input_events_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_input_events_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -16123,7 +16255,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_hpa_gratuitous_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_hpa_gratuitous_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -16152,7 +16284,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_hpa_gratuitous_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_hpa_gratuitous_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -16176,7 +16308,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_cell_geo_changes_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_cell_geo_changes_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -16205,7 +16337,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_cell_geo_changes_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_cell_geo_changes_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -16229,7 +16361,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_pixel_geo_changes_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_pixel_geo_changes_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -16258,7 +16390,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_pixel_geo_changes_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_pixel_geo_changes_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -16282,7 +16414,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_fbbytes_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_fbbytes_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -16311,7 +16443,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_fbbytes_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_fbbytes_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -16335,7 +16467,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_planes_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_planes_set(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -16364,7 +16496,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncstats_planes_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncstats_planes_get(int argc, VALUE *argv, VALUE self) {
   struct ncstats *arg1 = (struct ncstats *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -16389,9 +16521,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_ncstats_allocate(VALUE self)
+_wrap_Ncstats_allocate(VALUE self)
 #else
-_wrap_ncstats_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_Ncstats_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_ncstats);
@@ -16403,7 +16535,7 @@ _wrap_ncstats_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_ncstats(int argc, VALUE *argv, VALUE self) {
+_wrap_new_Ncstats(int argc, VALUE *argv, VALUE self) {
   struct ncstats *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -24130,10 +24262,10 @@ fail:
 }
 
 
-static swig_class SwigClassNcvisual_options;
+static swig_class SwigClassNcvisualOptions;
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_n_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_n_set(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   struct ncplane *arg2 = (struct ncplane *) 0 ;
   void *argp1 = 0 ;
@@ -24162,7 +24294,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_n_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_n_get(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -24186,7 +24318,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_scaling_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_scaling_set(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   ncscale_e arg2 ;
   void *argp1 = 0 ;
@@ -24215,7 +24347,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_scaling_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_scaling_get(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -24239,7 +24371,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_y_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_y_set(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   int arg2 ;
   void *argp1 = 0 ;
@@ -24268,7 +24400,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_y_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_y_get(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -24292,7 +24424,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_x_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_x_set(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   int arg2 ;
   void *argp1 = 0 ;
@@ -24321,7 +24453,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_x_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_x_get(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -24345,7 +24477,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_begy_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_begy_set(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -24374,7 +24506,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_begy_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_begy_get(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -24398,7 +24530,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_begx_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_begx_set(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -24427,7 +24559,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_begx_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_begx_get(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -24451,7 +24583,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_leny_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_leny_set(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -24480,7 +24612,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_leny_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_leny_get(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -24504,7 +24636,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_lenx_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_lenx_set(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -24533,7 +24665,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_lenx_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_lenx_get(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -24557,7 +24689,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_blitter_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_blitter_set(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   ncblitter_e arg2 ;
   void *argp1 = 0 ;
@@ -24586,7 +24718,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_blitter_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_blitter_get(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -24610,7 +24742,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_flags_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_flags_set(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -24639,7 +24771,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_flags_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_flags_get(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -24663,7 +24795,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_transcolor_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_transcolor_set(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   uint32_t arg2 ;
   void *argp1 = 0 ;
@@ -24692,7 +24824,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_transcolor_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_transcolor_get(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -24716,7 +24848,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_pxoffy_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_pxoffy_set(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -24745,7 +24877,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_pxoffy_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_pxoffy_get(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -24769,7 +24901,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_pxoffx_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_pxoffx_set(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -24798,7 +24930,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvisual_options_pxoffx_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcvisualOptions_pxoffx_get(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *arg1 = (struct ncvisual_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -24823,9 +24955,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_ncvisual_options_allocate(VALUE self)
+_wrap_NcvisualOptions_allocate(VALUE self)
 #else
-_wrap_ncvisual_options_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_NcvisualOptions_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_ncvisual_options);
@@ -24837,7 +24969,7 @@ _wrap_ncvisual_options_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_ncvisual_options(int argc, VALUE *argv, VALUE self) {
+_wrap_new_NcvisualOptions(int argc, VALUE *argv, VALUE self) {
   struct ncvisual_options *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -24860,7 +24992,7 @@ free_ncvisual_options(void *self) {
 static swig_class SwigClassNcvgeom;
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_pixy_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_pixy_set(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -24889,7 +25021,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_pixy_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_pixy_get(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -24913,7 +25045,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_pixx_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_pixx_set(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -24942,7 +25074,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_pixx_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_pixx_get(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -24966,7 +25098,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_cdimy_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_cdimy_set(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -24995,7 +25127,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_cdimy_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_cdimy_get(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -25019,7 +25151,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_cdimx_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_cdimx_set(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -25048,7 +25180,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_cdimx_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_cdimx_get(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -25072,7 +25204,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_rpixy_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_rpixy_set(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -25101,7 +25233,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_rpixy_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_rpixy_get(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -25125,7 +25257,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_rpixx_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_rpixx_set(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -25154,7 +25286,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_rpixx_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_rpixx_get(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -25178,7 +25310,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_rcelly_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_rcelly_set(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -25207,7 +25339,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_rcelly_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_rcelly_get(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -25231,7 +25363,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_rcellx_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_rcellx_set(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -25260,7 +25392,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_rcellx_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_rcellx_get(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -25284,7 +25416,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_scaley_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_scaley_set(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -25313,7 +25445,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_scaley_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_scaley_get(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -25337,7 +25469,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_scalex_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_scalex_set(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -25366,7 +25498,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_scalex_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_scalex_get(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -25390,7 +25522,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_begy_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_begy_set(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -25419,7 +25551,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_begy_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_begy_get(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -25443,7 +25575,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_begx_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_begx_set(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -25472,7 +25604,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_begx_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_begx_get(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -25496,7 +25628,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_leny_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_leny_set(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -25525,7 +25657,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_leny_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_leny_get(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -25549,7 +25681,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_lenx_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_lenx_set(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -25578,7 +25710,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_lenx_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_lenx_get(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -25602,7 +25734,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_maxpixely_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_maxpixely_set(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -25631,7 +25763,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_maxpixely_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_maxpixely_get(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -25655,7 +25787,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_maxpixelx_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_maxpixelx_set(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -25684,7 +25816,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_maxpixelx_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_maxpixelx_get(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -25708,7 +25840,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_blitter_set(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_blitter_set(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   ncblitter_e arg2 ;
   void *argp1 = 0 ;
@@ -25737,7 +25869,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncvgeom_blitter_get(int argc, VALUE *argv, VALUE self) {
+_wrap_Ncvgeom_blitter_get(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *arg1 = (struct ncvgeom *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -25762,9 +25894,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_ncvgeom_allocate(VALUE self)
+_wrap_Ncvgeom_allocate(VALUE self)
 #else
-_wrap_ncvgeom_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_Ncvgeom_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_ncvgeom);
@@ -25776,7 +25908,7 @@ _wrap_ncvgeom_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_ncvgeom(int argc, VALUE *argv, VALUE self) {
+_wrap_new_Ncvgeom(int argc, VALUE *argv, VALUE self) {
   struct ncvgeom *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -26926,10 +27058,10 @@ fail:
 }
 
 
-static swig_class SwigClassNcreel_options;
+static swig_class SwigClassNcreelOptions;
 
 SWIGINTERN VALUE
-_wrap_ncreel_options_bordermask_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcreelOptions_bordermask_set(int argc, VALUE *argv, VALUE self) {
   struct ncreel_options *arg1 = (struct ncreel_options *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -26958,7 +27090,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncreel_options_bordermask_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcreelOptions_bordermask_get(int argc, VALUE *argv, VALUE self) {
   struct ncreel_options *arg1 = (struct ncreel_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -26982,7 +27114,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncreel_options_borderchan_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcreelOptions_borderchan_set(int argc, VALUE *argv, VALUE self) {
   struct ncreel_options *arg1 = (struct ncreel_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -27011,7 +27143,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncreel_options_borderchan_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcreelOptions_borderchan_get(int argc, VALUE *argv, VALUE self) {
   struct ncreel_options *arg1 = (struct ncreel_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -27035,7 +27167,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncreel_options_tabletmask_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcreelOptions_tabletmask_set(int argc, VALUE *argv, VALUE self) {
   struct ncreel_options *arg1 = (struct ncreel_options *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -27064,7 +27196,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncreel_options_tabletmask_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcreelOptions_tabletmask_get(int argc, VALUE *argv, VALUE self) {
   struct ncreel_options *arg1 = (struct ncreel_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -27088,7 +27220,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncreel_options_tabletchan_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcreelOptions_tabletchan_set(int argc, VALUE *argv, VALUE self) {
   struct ncreel_options *arg1 = (struct ncreel_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -27117,7 +27249,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncreel_options_tabletchan_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcreelOptions_tabletchan_get(int argc, VALUE *argv, VALUE self) {
   struct ncreel_options *arg1 = (struct ncreel_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -27141,7 +27273,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncreel_options_focusedchan_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcreelOptions_focusedchan_set(int argc, VALUE *argv, VALUE self) {
   struct ncreel_options *arg1 = (struct ncreel_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -27170,7 +27302,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncreel_options_focusedchan_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcreelOptions_focusedchan_get(int argc, VALUE *argv, VALUE self) {
   struct ncreel_options *arg1 = (struct ncreel_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -27194,7 +27326,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncreel_options_flags_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcreelOptions_flags_set(int argc, VALUE *argv, VALUE self) {
   struct ncreel_options *arg1 = (struct ncreel_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -27223,7 +27355,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncreel_options_flags_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcreelOptions_flags_get(int argc, VALUE *argv, VALUE self) {
   struct ncreel_options *arg1 = (struct ncreel_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -27248,9 +27380,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_ncreel_options_allocate(VALUE self)
+_wrap_NcreelOptions_allocate(VALUE self)
 #else
-_wrap_ncreel_options_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_NcreelOptions_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_ncreel_options);
@@ -27262,7 +27394,7 @@ _wrap_ncreel_options_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_ncreel_options(int argc, VALUE *argv, VALUE self) {
+_wrap_new_NcreelOptions(int argc, VALUE *argv, VALUE self) {
   struct ncreel_options *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -28093,10 +28225,10 @@ fail:
 }
 
 
-static swig_class SwigClassNcselector_item;
+static swig_class SwigClassNcselectorItem;
 
 SWIGINTERN VALUE
-_wrap_ncselector_item_option_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorItem_option_set(int argc, VALUE *argv, VALUE self) {
   struct ncselector_item *arg1 = (struct ncselector_item *) 0 ;
   char *arg2 = (char *) 0 ;
   void *argp1 = 0 ;
@@ -28139,7 +28271,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_item_option_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorItem_option_get(int argc, VALUE *argv, VALUE self) {
   struct ncselector_item *arg1 = (struct ncselector_item *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -28163,7 +28295,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_item_desc_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorItem_desc_set(int argc, VALUE *argv, VALUE self) {
   struct ncselector_item *arg1 = (struct ncselector_item *) 0 ;
   char *arg2 = (char *) 0 ;
   void *argp1 = 0 ;
@@ -28206,7 +28338,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_item_desc_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorItem_desc_get(int argc, VALUE *argv, VALUE self) {
   struct ncselector_item *arg1 = (struct ncselector_item *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -28231,9 +28363,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_ncselector_item_allocate(VALUE self)
+_wrap_NcselectorItem_allocate(VALUE self)
 #else
-_wrap_ncselector_item_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_NcselectorItem_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_ncselector_item);
@@ -28245,7 +28377,7 @@ _wrap_ncselector_item_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_ncselector_item(int argc, VALUE *argv, VALUE self) {
+_wrap_new_NcselectorItem(int argc, VALUE *argv, VALUE self) {
   struct ncselector_item *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -28265,10 +28397,10 @@ free_ncselector_item(void *self) {
     free((char *) arg1);
 }
 
-static swig_class SwigClassNcselector_options;
+static swig_class SwigClassNcselectorOptions;
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_title_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_title_set(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   char *arg2 = (char *) 0 ;
   void *argp1 = 0 ;
@@ -28311,7 +28443,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_title_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_title_get(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -28335,7 +28467,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_secondary_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_secondary_set(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   char *arg2 = (char *) 0 ;
   void *argp1 = 0 ;
@@ -28378,7 +28510,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_secondary_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_secondary_get(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -28402,7 +28534,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_footer_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_footer_set(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   char *arg2 = (char *) 0 ;
   void *argp1 = 0 ;
@@ -28445,7 +28577,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_footer_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_footer_get(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -28469,7 +28601,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_items_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_items_set(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   struct ncselector_item *arg2 = (struct ncselector_item *) 0 ;
   void *argp1 = 0 ;
@@ -28498,7 +28630,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_items_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_items_get(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -28522,7 +28654,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_defidx_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_defidx_set(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -28551,7 +28683,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_defidx_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_defidx_get(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -28575,7 +28707,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_maxdisplay_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_maxdisplay_set(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -28604,7 +28736,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_maxdisplay_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_maxdisplay_get(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -28628,7 +28760,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_opchannels_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_opchannels_set(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -28657,7 +28789,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_opchannels_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_opchannels_get(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -28681,7 +28813,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_descchannels_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_descchannels_set(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -28710,7 +28842,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_descchannels_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_descchannels_get(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -28734,7 +28866,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_titlechannels_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_titlechannels_set(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -28763,7 +28895,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_titlechannels_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_titlechannels_get(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -28787,7 +28919,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_footchannels_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_footchannels_set(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -28816,7 +28948,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_footchannels_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_footchannels_get(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -28840,7 +28972,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_boxchannels_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_boxchannels_set(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -28869,7 +29001,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_boxchannels_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_boxchannels_get(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -28893,7 +29025,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_flags_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_flags_set(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -28922,7 +29054,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncselector_options_flags_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcselectorOptions_flags_get(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *arg1 = (struct ncselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -28947,9 +29079,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_ncselector_options_allocate(VALUE self)
+_wrap_NcselectorOptions_allocate(VALUE self)
 #else
-_wrap_ncselector_options_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_NcselectorOptions_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_ncselector_options);
@@ -28961,7 +29093,7 @@ _wrap_ncselector_options_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_ncselector_options(int argc, VALUE *argv, VALUE self) {
+_wrap_new_NcselectorOptions(int argc, VALUE *argv, VALUE self) {
   struct ncselector_options *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -29242,10 +29374,10 @@ fail:
 }
 
 
-static swig_class SwigClassNcmselector_item;
+static swig_class SwigClassNcmselectorItem;
 
 SWIGINTERN VALUE
-_wrap_ncmselector_item_option_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmselectorItem_option_set(int argc, VALUE *argv, VALUE self) {
   struct ncmselector_item *arg1 = (struct ncmselector_item *) 0 ;
   char *arg2 = (char *) 0 ;
   void *argp1 = 0 ;
@@ -29288,7 +29420,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmselector_item_option_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmselectorItem_option_get(int argc, VALUE *argv, VALUE self) {
   struct ncmselector_item *arg1 = (struct ncmselector_item *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -29312,7 +29444,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmselector_item_desc_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmselectorItem_desc_set(int argc, VALUE *argv, VALUE self) {
   struct ncmselector_item *arg1 = (struct ncmselector_item *) 0 ;
   char *arg2 = (char *) 0 ;
   void *argp1 = 0 ;
@@ -29355,7 +29487,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmselector_item_desc_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmselectorItem_desc_get(int argc, VALUE *argv, VALUE self) {
   struct ncmselector_item *arg1 = (struct ncmselector_item *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -29379,7 +29511,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmselector_item_selected_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmselectorItem_selected_set(int argc, VALUE *argv, VALUE self) {
   struct ncmselector_item *arg1 = (struct ncmselector_item *) 0 ;
   bool arg2 ;
   void *argp1 = 0 ;
@@ -29408,7 +29540,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmselector_item_selected_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmselectorItem_selected_get(int argc, VALUE *argv, VALUE self) {
   struct ncmselector_item *arg1 = (struct ncmselector_item *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -29433,9 +29565,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_ncmselector_item_allocate(VALUE self)
+_wrap_NcmselectorItem_allocate(VALUE self)
 #else
-_wrap_ncmselector_item_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_NcmselectorItem_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_ncmselector_item);
@@ -29447,7 +29579,7 @@ _wrap_ncmselector_item_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_ncmselector_item(int argc, VALUE *argv, VALUE self) {
+_wrap_new_NcmselectorItem(int argc, VALUE *argv, VALUE self) {
   struct ncmselector_item *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -29467,10 +29599,10 @@ free_ncmselector_item(void *self) {
     free((char *) arg1);
 }
 
-static swig_class SwigClassNcmultiselector_options;
+static swig_class SwigClassNcmultiselectorOptions;
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_title_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_title_set(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   char *arg2 = (char *) 0 ;
   void *argp1 = 0 ;
@@ -29513,7 +29645,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_title_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_title_get(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -29537,7 +29669,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_secondary_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_secondary_set(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   char *arg2 = (char *) 0 ;
   void *argp1 = 0 ;
@@ -29580,7 +29712,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_secondary_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_secondary_get(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -29604,7 +29736,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_footer_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_footer_set(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   char *arg2 = (char *) 0 ;
   void *argp1 = 0 ;
@@ -29647,7 +29779,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_footer_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_footer_get(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -29671,7 +29803,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_items_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_items_set(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   struct ncmselector_item *arg2 = (struct ncmselector_item *) 0 ;
   void *argp1 = 0 ;
@@ -29700,7 +29832,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_items_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_items_get(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -29724,7 +29856,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_maxdisplay_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_maxdisplay_set(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -29753,7 +29885,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_maxdisplay_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_maxdisplay_get(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -29777,7 +29909,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_opchannels_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_opchannels_set(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -29806,7 +29938,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_opchannels_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_opchannels_get(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -29830,7 +29962,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_descchannels_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_descchannels_set(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -29859,7 +29991,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_descchannels_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_descchannels_get(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -29883,7 +30015,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_titlechannels_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_titlechannels_set(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -29912,7 +30044,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_titlechannels_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_titlechannels_get(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -29936,7 +30068,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_footchannels_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_footchannels_set(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -29965,7 +30097,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_footchannels_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_footchannels_get(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -29989,7 +30121,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_boxchannels_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_boxchannels_set(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -30018,7 +30150,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_boxchannels_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_boxchannels_get(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -30042,7 +30174,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_flags_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_flags_set(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -30071,7 +30203,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmultiselector_options_flags_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmultiselectorOptions_flags_get(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *arg1 = (struct ncmultiselector_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -30096,9 +30228,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_ncmultiselector_options_allocate(VALUE self)
+_wrap_NcmultiselectorOptions_allocate(VALUE self)
 #else
-_wrap_ncmultiselector_options_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_NcmultiselectorOptions_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_ncmultiselector_options);
@@ -30110,7 +30242,7 @@ _wrap_ncmultiselector_options_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_ncmultiselector_options(int argc, VALUE *argv, VALUE self) {
+_wrap_new_NcmultiselectorOptions(int argc, VALUE *argv, VALUE self) {
   struct ncmultiselector_options *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -30279,10 +30411,10 @@ fail:
 }
 
 
-static swig_class SwigClassNctree_item;
+static swig_class SwigClassNctreeItem;
 
 SWIGINTERN VALUE
-_wrap_nctree_item_curry_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NctreeItem_curry_set(int argc, VALUE *argv, VALUE self) {
   struct nctree_item *arg1 = (struct nctree_item *) 0 ;
   void *arg2 = (void *) 0 ;
   void *argp1 = 0 ;
@@ -30309,7 +30441,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctree_item_curry_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NctreeItem_curry_get(int argc, VALUE *argv, VALUE self) {
   struct nctree_item *arg1 = (struct nctree_item *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -30333,7 +30465,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctree_item_subs_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NctreeItem_subs_set(int argc, VALUE *argv, VALUE self) {
   struct nctree_item *arg1 = (struct nctree_item *) 0 ;
   struct nctree_item *arg2 = (struct nctree_item *) 0 ;
   void *argp1 = 0 ;
@@ -30362,7 +30494,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctree_item_subs_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NctreeItem_subs_get(int argc, VALUE *argv, VALUE self) {
   struct nctree_item *arg1 = (struct nctree_item *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -30386,7 +30518,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctree_item_subcount_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NctreeItem_subcount_set(int argc, VALUE *argv, VALUE self) {
   struct nctree_item *arg1 = (struct nctree_item *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -30415,7 +30547,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctree_item_subcount_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NctreeItem_subcount_get(int argc, VALUE *argv, VALUE self) {
   struct nctree_item *arg1 = (struct nctree_item *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -30440,9 +30572,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_nctree_item_allocate(VALUE self)
+_wrap_NctreeItem_allocate(VALUE self)
 #else
-_wrap_nctree_item_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_NctreeItem_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_nctree_item);
@@ -30454,7 +30586,7 @@ _wrap_nctree_item_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_nctree_item(int argc, VALUE *argv, VALUE self) {
+_wrap_new_NctreeItem(int argc, VALUE *argv, VALUE self) {
   struct nctree_item *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -30474,10 +30606,10 @@ free_nctree_item(void *self) {
     free((char *) arg1);
 }
 
-static swig_class SwigClassNctree_options;
+static swig_class SwigClassNctreeOptions;
 
 SWIGINTERN VALUE
-_wrap_nctree_options_items_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NctreeOptions_items_set(int argc, VALUE *argv, VALUE self) {
   struct nctree_options *arg1 = (struct nctree_options *) 0 ;
   struct nctree_item *arg2 = (struct nctree_item *) 0 ;
   void *argp1 = 0 ;
@@ -30506,7 +30638,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctree_options_items_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NctreeOptions_items_get(int argc, VALUE *argv, VALUE self) {
   struct nctree_options *arg1 = (struct nctree_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -30530,7 +30662,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctree_options_count_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NctreeOptions_count_set(int argc, VALUE *argv, VALUE self) {
   struct nctree_options *arg1 = (struct nctree_options *) 0 ;
   unsigned int arg2 ;
   void *argp1 = 0 ;
@@ -30559,7 +30691,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctree_options_count_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NctreeOptions_count_get(int argc, VALUE *argv, VALUE self) {
   struct nctree_options *arg1 = (struct nctree_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -30583,7 +30715,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctree_options_nctreecb_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NctreeOptions_nctreecb_set(int argc, VALUE *argv, VALUE self) {
   struct nctree_options *arg1 = (struct nctree_options *) 0 ;
   int (*arg2)(struct ncplane *,void *,int) = (int (*)(struct ncplane *,void *,int)) 0 ;
   void *argp1 = 0 ;
@@ -30611,7 +30743,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctree_options_nctreecb_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NctreeOptions_nctreecb_get(int argc, VALUE *argv, VALUE self) {
   struct nctree_options *arg1 = (struct nctree_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -30635,7 +30767,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctree_options_indentcols_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NctreeOptions_indentcols_set(int argc, VALUE *argv, VALUE self) {
   struct nctree_options *arg1 = (struct nctree_options *) 0 ;
   int arg2 ;
   void *argp1 = 0 ;
@@ -30664,7 +30796,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctree_options_indentcols_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NctreeOptions_indentcols_get(int argc, VALUE *argv, VALUE self) {
   struct nctree_options *arg1 = (struct nctree_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -30688,7 +30820,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctree_options_flags_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NctreeOptions_flags_set(int argc, VALUE *argv, VALUE self) {
   struct nctree_options *arg1 = (struct nctree_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -30717,7 +30849,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctree_options_flags_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NctreeOptions_flags_get(int argc, VALUE *argv, VALUE self) {
   struct nctree_options *arg1 = (struct nctree_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -30742,9 +30874,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_nctree_options_allocate(VALUE self)
+_wrap_NctreeOptions_allocate(VALUE self)
 #else
-_wrap_nctree_options_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_NctreeOptions_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_nctree_options);
@@ -30756,7 +30888,7 @@ _wrap_nctree_options_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_nctree_options(int argc, VALUE *argv, VALUE self) {
+_wrap_new_NctreeOptions(int argc, VALUE *argv, VALUE self) {
   struct nctree_options *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -31105,10 +31237,10 @@ fail:
 }
 
 
-static swig_class SwigClassNcmenu_item;
+static swig_class SwigClassNcmenuItem;
 
 SWIGINTERN VALUE
-_wrap_ncmenu_item_desc_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuItem_desc_set(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_item *arg1 = (struct ncmenu_item *) 0 ;
   char *arg2 = (char *) 0 ;
   void *argp1 = 0 ;
@@ -31151,7 +31283,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmenu_item_desc_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuItem_desc_get(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_item *arg1 = (struct ncmenu_item *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -31175,7 +31307,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmenu_item_shortcut_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuItem_shortcut_set(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_item *arg1 = (struct ncmenu_item *) 0 ;
   ncinput *arg2 = (ncinput *) 0 ;
   void *argp1 = 0 ;
@@ -31204,7 +31336,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmenu_item_shortcut_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuItem_shortcut_get(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_item *arg1 = (struct ncmenu_item *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -31229,9 +31361,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_ncmenu_item_allocate(VALUE self)
+_wrap_NcmenuItem_allocate(VALUE self)
 #else
-_wrap_ncmenu_item_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_NcmenuItem_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_ncmenu_item);
@@ -31243,7 +31375,7 @@ _wrap_ncmenu_item_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_ncmenu_item(int argc, VALUE *argv, VALUE self) {
+_wrap_new_NcmenuItem(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_item *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -31263,10 +31395,10 @@ free_ncmenu_item(void *self) {
     free((char *) arg1);
 }
 
-static swig_class SwigClassNcmenu_section;
+static swig_class SwigClassNcmenuSection;
 
 SWIGINTERN VALUE
-_wrap_ncmenu_section_name_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuSection_name_set(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_section *arg1 = (struct ncmenu_section *) 0 ;
   char *arg2 = (char *) 0 ;
   void *argp1 = 0 ;
@@ -31309,7 +31441,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmenu_section_name_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuSection_name_get(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_section *arg1 = (struct ncmenu_section *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -31333,7 +31465,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmenu_section_itemcount_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuSection_itemcount_set(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_section *arg1 = (struct ncmenu_section *) 0 ;
   int arg2 ;
   void *argp1 = 0 ;
@@ -31362,7 +31494,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmenu_section_itemcount_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuSection_itemcount_get(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_section *arg1 = (struct ncmenu_section *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -31386,7 +31518,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmenu_section_items_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuSection_items_set(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_section *arg1 = (struct ncmenu_section *) 0 ;
   struct ncmenu_item *arg2 = (struct ncmenu_item *) 0 ;
   void *argp1 = 0 ;
@@ -31415,7 +31547,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmenu_section_items_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuSection_items_get(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_section *arg1 = (struct ncmenu_section *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -31439,7 +31571,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmenu_section_shortcut_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuSection_shortcut_set(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_section *arg1 = (struct ncmenu_section *) 0 ;
   ncinput *arg2 = (ncinput *) 0 ;
   void *argp1 = 0 ;
@@ -31468,7 +31600,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmenu_section_shortcut_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuSection_shortcut_get(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_section *arg1 = (struct ncmenu_section *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -31493,9 +31625,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_ncmenu_section_allocate(VALUE self)
+_wrap_NcmenuSection_allocate(VALUE self)
 #else
-_wrap_ncmenu_section_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_NcmenuSection_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_ncmenu_section);
@@ -31507,7 +31639,7 @@ _wrap_ncmenu_section_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_ncmenu_section(int argc, VALUE *argv, VALUE self) {
+_wrap_new_NcmenuSection(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_section *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -31527,10 +31659,10 @@ free_ncmenu_section(void *self) {
     free((char *) arg1);
 }
 
-static swig_class SwigClassNcmenu_options;
+static swig_class SwigClassNcmenuOptions;
 
 SWIGINTERN VALUE
-_wrap_ncmenu_options_sections_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuOptions_sections_set(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_options *arg1 = (struct ncmenu_options *) 0 ;
   struct ncmenu_section *arg2 = (struct ncmenu_section *) 0 ;
   void *argp1 = 0 ;
@@ -31559,7 +31691,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmenu_options_sections_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuOptions_sections_get(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_options *arg1 = (struct ncmenu_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -31583,7 +31715,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmenu_options_sectioncount_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuOptions_sectioncount_set(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_options *arg1 = (struct ncmenu_options *) 0 ;
   int arg2 ;
   void *argp1 = 0 ;
@@ -31612,7 +31744,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmenu_options_sectioncount_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuOptions_sectioncount_get(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_options *arg1 = (struct ncmenu_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -31636,7 +31768,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmenu_options_headerchannels_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuOptions_headerchannels_set(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_options *arg1 = (struct ncmenu_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -31665,7 +31797,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmenu_options_headerchannels_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuOptions_headerchannels_get(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_options *arg1 = (struct ncmenu_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -31689,7 +31821,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmenu_options_sectionchannels_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuOptions_sectionchannels_set(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_options *arg1 = (struct ncmenu_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -31718,7 +31850,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmenu_options_sectionchannels_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuOptions_sectionchannels_get(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_options *arg1 = (struct ncmenu_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -31742,7 +31874,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmenu_options_flags_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuOptions_flags_set(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_options *arg1 = (struct ncmenu_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -31771,7 +31903,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncmenu_options_flags_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcmenuOptions_flags_get(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_options *arg1 = (struct ncmenu_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -31796,9 +31928,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_ncmenu_options_allocate(VALUE self)
+_wrap_NcmenuOptions_allocate(VALUE self)
 #else
-_wrap_ncmenu_options_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_NcmenuOptions_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_ncmenu_options);
@@ -31810,7 +31942,7 @@ _wrap_ncmenu_options_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_ncmenu_options(int argc, VALUE *argv, VALUE self) {
+_wrap_new_NcmenuOptions(int argc, VALUE *argv, VALUE self) {
   struct ncmenu_options *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -32227,10 +32359,10 @@ fail:
 }
 
 
-static swig_class SwigClassNcprogbar_options;
+static swig_class SwigClassNcprogbarOptions;
 
 SWIGINTERN VALUE
-_wrap_ncprogbar_options_ulchannel_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcprogbarOptions_ulchannel_set(int argc, VALUE *argv, VALUE self) {
   struct ncprogbar_options *arg1 = (struct ncprogbar_options *) 0 ;
   uint32_t arg2 ;
   void *argp1 = 0 ;
@@ -32259,7 +32391,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncprogbar_options_ulchannel_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcprogbarOptions_ulchannel_get(int argc, VALUE *argv, VALUE self) {
   struct ncprogbar_options *arg1 = (struct ncprogbar_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -32283,7 +32415,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncprogbar_options_urchannel_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcprogbarOptions_urchannel_set(int argc, VALUE *argv, VALUE self) {
   struct ncprogbar_options *arg1 = (struct ncprogbar_options *) 0 ;
   uint32_t arg2 ;
   void *argp1 = 0 ;
@@ -32312,7 +32444,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncprogbar_options_urchannel_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcprogbarOptions_urchannel_get(int argc, VALUE *argv, VALUE self) {
   struct ncprogbar_options *arg1 = (struct ncprogbar_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -32336,7 +32468,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncprogbar_options_blchannel_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcprogbarOptions_blchannel_set(int argc, VALUE *argv, VALUE self) {
   struct ncprogbar_options *arg1 = (struct ncprogbar_options *) 0 ;
   uint32_t arg2 ;
   void *argp1 = 0 ;
@@ -32365,7 +32497,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncprogbar_options_blchannel_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcprogbarOptions_blchannel_get(int argc, VALUE *argv, VALUE self) {
   struct ncprogbar_options *arg1 = (struct ncprogbar_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -32389,7 +32521,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncprogbar_options_brchannel_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcprogbarOptions_brchannel_set(int argc, VALUE *argv, VALUE self) {
   struct ncprogbar_options *arg1 = (struct ncprogbar_options *) 0 ;
   uint32_t arg2 ;
   void *argp1 = 0 ;
@@ -32418,7 +32550,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncprogbar_options_brchannel_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcprogbarOptions_brchannel_get(int argc, VALUE *argv, VALUE self) {
   struct ncprogbar_options *arg1 = (struct ncprogbar_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -32442,7 +32574,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncprogbar_options_flags_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcprogbarOptions_flags_set(int argc, VALUE *argv, VALUE self) {
   struct ncprogbar_options *arg1 = (struct ncprogbar_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -32471,7 +32603,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncprogbar_options_flags_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcprogbarOptions_flags_get(int argc, VALUE *argv, VALUE self) {
   struct ncprogbar_options *arg1 = (struct ncprogbar_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -32496,9 +32628,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_ncprogbar_options_allocate(VALUE self)
+_wrap_NcprogbarOptions_allocate(VALUE self)
 #else
-_wrap_ncprogbar_options_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_NcprogbarOptions_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_ncprogbar_options);
@@ -32510,7 +32642,7 @@ _wrap_ncprogbar_options_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_ncprogbar_options(int argc, VALUE *argv, VALUE self) {
+_wrap_new_NcprogbarOptions(int argc, VALUE *argv, VALUE self) {
   struct ncprogbar_options *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -32663,10 +32795,10 @@ fail:
 }
 
 
-static swig_class SwigClassNctabbed_options;
+static swig_class SwigClassNctabbedOptions;
 
 SWIGINTERN VALUE
-_wrap_nctabbed_options_selchan_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NctabbedOptions_selchan_set(int argc, VALUE *argv, VALUE self) {
   struct nctabbed_options *arg1 = (struct nctabbed_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -32695,7 +32827,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctabbed_options_selchan_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NctabbedOptions_selchan_get(int argc, VALUE *argv, VALUE self) {
   struct nctabbed_options *arg1 = (struct nctabbed_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -32719,7 +32851,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctabbed_options_hdrchan_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NctabbedOptions_hdrchan_set(int argc, VALUE *argv, VALUE self) {
   struct nctabbed_options *arg1 = (struct nctabbed_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -32748,7 +32880,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctabbed_options_hdrchan_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NctabbedOptions_hdrchan_get(int argc, VALUE *argv, VALUE self) {
   struct nctabbed_options *arg1 = (struct nctabbed_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -32772,7 +32904,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctabbed_options_sepchan_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NctabbedOptions_sepchan_set(int argc, VALUE *argv, VALUE self) {
   struct nctabbed_options *arg1 = (struct nctabbed_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -32801,7 +32933,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctabbed_options_sepchan_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NctabbedOptions_sepchan_get(int argc, VALUE *argv, VALUE self) {
   struct nctabbed_options *arg1 = (struct nctabbed_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -32825,7 +32957,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctabbed_options_separator_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NctabbedOptions_separator_set(int argc, VALUE *argv, VALUE self) {
   struct nctabbed_options *arg1 = (struct nctabbed_options *) 0 ;
   char *arg2 = (char *) 0 ;
   void *argp1 = 0 ;
@@ -32868,7 +33000,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctabbed_options_separator_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NctabbedOptions_separator_get(int argc, VALUE *argv, VALUE self) {
   struct nctabbed_options *arg1 = (struct nctabbed_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -32892,7 +33024,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctabbed_options_flags_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NctabbedOptions_flags_set(int argc, VALUE *argv, VALUE self) {
   struct nctabbed_options *arg1 = (struct nctabbed_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -32921,7 +33053,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_nctabbed_options_flags_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NctabbedOptions_flags_get(int argc, VALUE *argv, VALUE self) {
   struct nctabbed_options *arg1 = (struct nctabbed_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -32946,9 +33078,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_nctabbed_options_allocate(VALUE self)
+_wrap_NctabbedOptions_allocate(VALUE self)
 #else
-_wrap_nctabbed_options_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_NctabbedOptions_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_nctabbed_options);
@@ -32960,7 +33092,7 @@ _wrap_nctabbed_options_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_nctabbed_options(int argc, VALUE *argv, VALUE self) {
+_wrap_new_NctabbedOptions(int argc, VALUE *argv, VALUE self) {
   struct nctabbed_options *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -34059,10 +34191,10 @@ fail:
 }
 
 
-static swig_class SwigClassNcplot_options;
+static swig_class SwigClassNcplotOptions;
 
 SWIGINTERN VALUE
-_wrap_ncplot_options_maxchannels_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplotOptions_maxchannels_set(int argc, VALUE *argv, VALUE self) {
   struct ncplot_options *arg1 = (struct ncplot_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -34091,7 +34223,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplot_options_maxchannels_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplotOptions_maxchannels_get(int argc, VALUE *argv, VALUE self) {
   struct ncplot_options *arg1 = (struct ncplot_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -34115,7 +34247,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplot_options_minchannels_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplotOptions_minchannels_set(int argc, VALUE *argv, VALUE self) {
   struct ncplot_options *arg1 = (struct ncplot_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -34144,7 +34276,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplot_options_minchannels_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplotOptions_minchannels_get(int argc, VALUE *argv, VALUE self) {
   struct ncplot_options *arg1 = (struct ncplot_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -34168,7 +34300,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplot_options_legendstyle_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplotOptions_legendstyle_set(int argc, VALUE *argv, VALUE self) {
   struct ncplot_options *arg1 = (struct ncplot_options *) 0 ;
   uint16_t arg2 ;
   void *argp1 = 0 ;
@@ -34197,7 +34329,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplot_options_legendstyle_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplotOptions_legendstyle_get(int argc, VALUE *argv, VALUE self) {
   struct ncplot_options *arg1 = (struct ncplot_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -34221,7 +34353,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplot_options_gridtype_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplotOptions_gridtype_set(int argc, VALUE *argv, VALUE self) {
   struct ncplot_options *arg1 = (struct ncplot_options *) 0 ;
   ncblitter_e arg2 ;
   void *argp1 = 0 ;
@@ -34250,7 +34382,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplot_options_gridtype_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplotOptions_gridtype_get(int argc, VALUE *argv, VALUE self) {
   struct ncplot_options *arg1 = (struct ncplot_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -34274,7 +34406,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplot_options_rangex_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplotOptions_rangex_set(int argc, VALUE *argv, VALUE self) {
   struct ncplot_options *arg1 = (struct ncplot_options *) 0 ;
   int arg2 ;
   void *argp1 = 0 ;
@@ -34303,7 +34435,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplot_options_rangex_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplotOptions_rangex_get(int argc, VALUE *argv, VALUE self) {
   struct ncplot_options *arg1 = (struct ncplot_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -34327,7 +34459,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplot_options_title_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplotOptions_title_set(int argc, VALUE *argv, VALUE self) {
   struct ncplot_options *arg1 = (struct ncplot_options *) 0 ;
   char *arg2 = (char *) 0 ;
   void *argp1 = 0 ;
@@ -34370,7 +34502,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplot_options_title_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplotOptions_title_get(int argc, VALUE *argv, VALUE self) {
   struct ncplot_options *arg1 = (struct ncplot_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -34394,7 +34526,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplot_options_flags_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplotOptions_flags_set(int argc, VALUE *argv, VALUE self) {
   struct ncplot_options *arg1 = (struct ncplot_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -34423,7 +34555,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncplot_options_flags_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcplotOptions_flags_get(int argc, VALUE *argv, VALUE self) {
   struct ncplot_options *arg1 = (struct ncplot_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -34448,9 +34580,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_ncplot_options_allocate(VALUE self)
+_wrap_NcplotOptions_allocate(VALUE self)
 #else
-_wrap_ncplot_options_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_NcplotOptions_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_ncplot_options);
@@ -34462,7 +34594,7 @@ _wrap_ncplot_options_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_ncplot_options(int argc, VALUE *argv, VALUE self) {
+_wrap_new_NcplotOptions(int argc, VALUE *argv, VALUE self) {
   struct ncplot_options *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -34911,10 +35043,10 @@ fail:
 }
 
 
-static swig_class SwigClassNcfdplane_options;
+static swig_class SwigClassNcfdplaneOptions;
 
 SWIGINTERN VALUE
-_wrap_ncfdplane_options_curry_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcfdplaneOptions_curry_set(int argc, VALUE *argv, VALUE self) {
   struct ncfdplane_options *arg1 = (struct ncfdplane_options *) 0 ;
   void *arg2 = (void *) 0 ;
   void *argp1 = 0 ;
@@ -34941,7 +35073,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncfdplane_options_curry_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcfdplaneOptions_curry_get(int argc, VALUE *argv, VALUE self) {
   struct ncfdplane_options *arg1 = (struct ncfdplane_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -34965,7 +35097,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncfdplane_options_follow_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcfdplaneOptions_follow_set(int argc, VALUE *argv, VALUE self) {
   struct ncfdplane_options *arg1 = (struct ncfdplane_options *) 0 ;
   bool arg2 ;
   void *argp1 = 0 ;
@@ -34994,7 +35126,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncfdplane_options_follow_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcfdplaneOptions_follow_get(int argc, VALUE *argv, VALUE self) {
   struct ncfdplane_options *arg1 = (struct ncfdplane_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -35018,7 +35150,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncfdplane_options_flags_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcfdplaneOptions_flags_set(int argc, VALUE *argv, VALUE self) {
   struct ncfdplane_options *arg1 = (struct ncfdplane_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -35047,7 +35179,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncfdplane_options_flags_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcfdplaneOptions_flags_get(int argc, VALUE *argv, VALUE self) {
   struct ncfdplane_options *arg1 = (struct ncfdplane_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -35072,9 +35204,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_ncfdplane_options_allocate(VALUE self)
+_wrap_NcfdplaneOptions_allocate(VALUE self)
 #else
-_wrap_ncfdplane_options_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_NcfdplaneOptions_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_ncfdplane_options);
@@ -35086,7 +35218,7 @@ _wrap_ncfdplane_options_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_ncfdplane_options(int argc, VALUE *argv, VALUE self) {
+_wrap_new_NcfdplaneOptions(int argc, VALUE *argv, VALUE self) {
   struct ncfdplane_options *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -35208,10 +35340,10 @@ fail:
 }
 
 
-static swig_class SwigClassNcsubproc_options;
+static swig_class SwigClassNcsubprocOptions;
 
 SWIGINTERN VALUE
-_wrap_ncsubproc_options_curry_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcsubprocOptions_curry_set(int argc, VALUE *argv, VALUE self) {
   struct ncsubproc_options *arg1 = (struct ncsubproc_options *) 0 ;
   void *arg2 = (void *) 0 ;
   void *argp1 = 0 ;
@@ -35238,7 +35370,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncsubproc_options_curry_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcsubprocOptions_curry_get(int argc, VALUE *argv, VALUE self) {
   struct ncsubproc_options *arg1 = (struct ncsubproc_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -35262,7 +35394,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncsubproc_options_restart_period_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcsubprocOptions_restart_period_set(int argc, VALUE *argv, VALUE self) {
   struct ncsubproc_options *arg1 = (struct ncsubproc_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -35291,7 +35423,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncsubproc_options_restart_period_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcsubprocOptions_restart_period_get(int argc, VALUE *argv, VALUE self) {
   struct ncsubproc_options *arg1 = (struct ncsubproc_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -35315,7 +35447,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncsubproc_options_flags_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcsubprocOptions_flags_set(int argc, VALUE *argv, VALUE self) {
   struct ncsubproc_options *arg1 = (struct ncsubproc_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -35344,7 +35476,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncsubproc_options_flags_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcsubprocOptions_flags_get(int argc, VALUE *argv, VALUE self) {
   struct ncsubproc_options *arg1 = (struct ncsubproc_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -35369,9 +35501,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_ncsubproc_options_allocate(VALUE self)
+_wrap_NcsubprocOptions_allocate(VALUE self)
 #else
-_wrap_ncsubproc_options_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_NcsubprocOptions_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_ncsubproc_options);
@@ -35383,7 +35515,7 @@ _wrap_ncsubproc_options_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_ncsubproc_options(int argc, VALUE *argv, VALUE self) {
+_wrap_new_NcsubprocOptions(int argc, VALUE *argv, VALUE self) {
   struct ncsubproc_options *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -35729,10 +35861,10 @@ fail:
 }
 
 
-static swig_class SwigClassNcreader_options;
+static swig_class SwigClassNcreaderOptions;
 
 SWIGINTERN VALUE
-_wrap_ncreader_options_tchannels_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcreaderOptions_tchannels_set(int argc, VALUE *argv, VALUE self) {
   struct ncreader_options *arg1 = (struct ncreader_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -35761,7 +35893,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncreader_options_tchannels_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcreaderOptions_tchannels_get(int argc, VALUE *argv, VALUE self) {
   struct ncreader_options *arg1 = (struct ncreader_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -35785,7 +35917,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncreader_options_tattrword_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcreaderOptions_tattrword_set(int argc, VALUE *argv, VALUE self) {
   struct ncreader_options *arg1 = (struct ncreader_options *) 0 ;
   uint32_t arg2 ;
   void *argp1 = 0 ;
@@ -35814,7 +35946,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncreader_options_tattrword_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcreaderOptions_tattrword_get(int argc, VALUE *argv, VALUE self) {
   struct ncreader_options *arg1 = (struct ncreader_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -35838,7 +35970,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncreader_options_flags_set(int argc, VALUE *argv, VALUE self) {
+_wrap_NcreaderOptions_flags_set(int argc, VALUE *argv, VALUE self) {
   struct ncreader_options *arg1 = (struct ncreader_options *) 0 ;
   uint64_t arg2 ;
   void *argp1 = 0 ;
@@ -35867,7 +35999,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ncreader_options_flags_get(int argc, VALUE *argv, VALUE self) {
+_wrap_NcreaderOptions_flags_get(int argc, VALUE *argv, VALUE self) {
   struct ncreader_options *arg1 = (struct ncreader_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -35892,9 +36024,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_ncreader_options_allocate(VALUE self)
+_wrap_NcreaderOptions_allocate(VALUE self)
 #else
-_wrap_ncreader_options_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_NcreaderOptions_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_ncreader_options);
@@ -35906,7 +36038,7 @@ _wrap_ncreader_options_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_ncreader_options(int argc, VALUE *argv, VALUE self) {
+_wrap_new_NcreaderOptions(int argc, VALUE *argv, VALUE self) {
   struct ncreader_options *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -37133,6 +37265,8 @@ SWIGEXPORT void Init_notcurses(void) {
   rb_require("complex");
 #endif
   
+  rb_define_module_function(mNotcurses, "ncchannel_initializer", _wrap_ncchannel_initializer, -1);
+  rb_define_module_function(mNotcurses, "ncchannels_initializer", _wrap_ncchannels_initializer, -1);
   rb_define_const(mNotcurses, "LINUX_VERSION_CODE", SWIG_From_int((int)(331678)));
   rb_define_const(mNotcurses, "LINUX_VERSION_MAJOR", SWIG_From_int((int)(5)));
   rb_define_const(mNotcurses, "LINUX_VERSION_PATCHLEVEL", SWIG_From_int((int)(15)));
@@ -37508,18 +37642,18 @@ SWIGEXPORT void Init_notcurses(void) {
   
   SwigClassNccell.klass = rb_define_class_under(mNotcurses, "Nccell", rb_cObject);
   SWIG_TypeClientData(SWIGTYPE_p_nccell, (void *) &SwigClassNccell);
-  rb_define_alloc_func(SwigClassNccell.klass, _wrap_nccell_allocate);
-  rb_define_method(SwigClassNccell.klass, "initialize", _wrap_new_nccell, -1);
-  rb_define_method(SwigClassNccell.klass, "gcluster=", _wrap_nccell_gcluster_set, -1);
-  rb_define_method(SwigClassNccell.klass, "gcluster", _wrap_nccell_gcluster_get, -1);
-  rb_define_method(SwigClassNccell.klass, "gcluster_backstop=", _wrap_nccell_gcluster_backstop_set, -1);
-  rb_define_method(SwigClassNccell.klass, "gcluster_backstop", _wrap_nccell_gcluster_backstop_get, -1);
-  rb_define_method(SwigClassNccell.klass, "width=", _wrap_nccell_width_set, -1);
-  rb_define_method(SwigClassNccell.klass, "width", _wrap_nccell_width_get, -1);
-  rb_define_method(SwigClassNccell.klass, "stylemask=", _wrap_nccell_stylemask_set, -1);
-  rb_define_method(SwigClassNccell.klass, "stylemask", _wrap_nccell_stylemask_get, -1);
-  rb_define_method(SwigClassNccell.klass, "channels=", _wrap_nccell_channels_set, -1);
-  rb_define_method(SwigClassNccell.klass, "channels", _wrap_nccell_channels_get, -1);
+  rb_define_alloc_func(SwigClassNccell.klass, _wrap_Nccell_allocate);
+  rb_define_method(SwigClassNccell.klass, "initialize", _wrap_new_Nccell, -1);
+  rb_define_method(SwigClassNccell.klass, "gcluster=", _wrap_Nccell_gcluster_set, -1);
+  rb_define_method(SwigClassNccell.klass, "gcluster", _wrap_Nccell_gcluster_get, -1);
+  rb_define_method(SwigClassNccell.klass, "gcluster_backstop=", _wrap_Nccell_gcluster_backstop_set, -1);
+  rb_define_method(SwigClassNccell.klass, "gcluster_backstop", _wrap_Nccell_gcluster_backstop_get, -1);
+  rb_define_method(SwigClassNccell.klass, "width=", _wrap_Nccell_width_set, -1);
+  rb_define_method(SwigClassNccell.klass, "width", _wrap_Nccell_width_get, -1);
+  rb_define_method(SwigClassNccell.klass, "stylemask=", _wrap_Nccell_stylemask_set, -1);
+  rb_define_method(SwigClassNccell.klass, "stylemask", _wrap_Nccell_stylemask_get, -1);
+  rb_define_method(SwigClassNccell.klass, "channels=", _wrap_Nccell_channels_set, -1);
+  rb_define_method(SwigClassNccell.klass, "channels", _wrap_Nccell_channels_get, -1);
   SwigClassNccell.mark = 0;
   SwigClassNccell.destroy = (void (*)(void *)) free_nccell;
   SwigClassNccell.trackObjects = 0;
@@ -37581,27 +37715,27 @@ SWIGEXPORT void Init_notcurses(void) {
   rb_define_const(mNotcurses, "NCOPTION_SCROLLING", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0200ull)));
   rb_define_const(mNotcurses, "NCOPTION_CLI_MODE", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)((0x0040ull|0x0002ull|0x0010ull|0x0200ull))));
   
-  SwigClassNotcurses_options.klass = rb_define_class_under(mNotcurses, "Notcurses_options", rb_cObject);
-  SWIG_TypeClientData(SWIGTYPE_p_notcurses_options, (void *) &SwigClassNotcurses_options);
-  rb_define_alloc_func(SwigClassNotcurses_options.klass, _wrap_notcurses_options_allocate);
-  rb_define_method(SwigClassNotcurses_options.klass, "initialize", _wrap_new_notcurses_options, -1);
-  rb_define_method(SwigClassNotcurses_options.klass, "termtype=", _wrap_notcurses_options_termtype_set, -1);
-  rb_define_method(SwigClassNotcurses_options.klass, "termtype", _wrap_notcurses_options_termtype_get, -1);
-  rb_define_method(SwigClassNotcurses_options.klass, "loglevel=", _wrap_notcurses_options_loglevel_set, -1);
-  rb_define_method(SwigClassNotcurses_options.klass, "loglevel", _wrap_notcurses_options_loglevel_get, -1);
-  rb_define_method(SwigClassNotcurses_options.klass, "margin_t=", _wrap_notcurses_options_margin_t_set, -1);
-  rb_define_method(SwigClassNotcurses_options.klass, "margin_t", _wrap_notcurses_options_margin_t_get, -1);
-  rb_define_method(SwigClassNotcurses_options.klass, "margin_r=", _wrap_notcurses_options_margin_r_set, -1);
-  rb_define_method(SwigClassNotcurses_options.klass, "margin_r", _wrap_notcurses_options_margin_r_get, -1);
-  rb_define_method(SwigClassNotcurses_options.klass, "margin_b=", _wrap_notcurses_options_margin_b_set, -1);
-  rb_define_method(SwigClassNotcurses_options.klass, "margin_b", _wrap_notcurses_options_margin_b_get, -1);
-  rb_define_method(SwigClassNotcurses_options.klass, "margin_l=", _wrap_notcurses_options_margin_l_set, -1);
-  rb_define_method(SwigClassNotcurses_options.klass, "margin_l", _wrap_notcurses_options_margin_l_get, -1);
-  rb_define_method(SwigClassNotcurses_options.klass, "flags=", _wrap_notcurses_options_flags_set, -1);
-  rb_define_method(SwigClassNotcurses_options.klass, "flags", _wrap_notcurses_options_flags_get, -1);
-  SwigClassNotcurses_options.mark = 0;
-  SwigClassNotcurses_options.destroy = (void (*)(void *)) free_notcurses_options;
-  SwigClassNotcurses_options.trackObjects = 0;
+  SwigClassNotcursesOptions.klass = rb_define_class_under(mNotcurses, "NotcursesOptions", rb_cObject);
+  SWIG_TypeClientData(SWIGTYPE_p_notcurses_options, (void *) &SwigClassNotcursesOptions);
+  rb_define_alloc_func(SwigClassNotcursesOptions.klass, _wrap_NotcursesOptions_allocate);
+  rb_define_method(SwigClassNotcursesOptions.klass, "initialize", _wrap_new_NotcursesOptions, -1);
+  rb_define_method(SwigClassNotcursesOptions.klass, "termtype=", _wrap_NotcursesOptions_termtype_set, -1);
+  rb_define_method(SwigClassNotcursesOptions.klass, "termtype", _wrap_NotcursesOptions_termtype_get, -1);
+  rb_define_method(SwigClassNotcursesOptions.klass, "loglevel=", _wrap_NotcursesOptions_loglevel_set, -1);
+  rb_define_method(SwigClassNotcursesOptions.klass, "loglevel", _wrap_NotcursesOptions_loglevel_get, -1);
+  rb_define_method(SwigClassNotcursesOptions.klass, "margin_t=", _wrap_NotcursesOptions_margin_t_set, -1);
+  rb_define_method(SwigClassNotcursesOptions.klass, "margin_t", _wrap_NotcursesOptions_margin_t_get, -1);
+  rb_define_method(SwigClassNotcursesOptions.klass, "margin_r=", _wrap_NotcursesOptions_margin_r_set, -1);
+  rb_define_method(SwigClassNotcursesOptions.klass, "margin_r", _wrap_NotcursesOptions_margin_r_get, -1);
+  rb_define_method(SwigClassNotcursesOptions.klass, "margin_b=", _wrap_NotcursesOptions_margin_b_set, -1);
+  rb_define_method(SwigClassNotcursesOptions.klass, "margin_b", _wrap_NotcursesOptions_margin_b_get, -1);
+  rb_define_method(SwigClassNotcursesOptions.klass, "margin_l=", _wrap_NotcursesOptions_margin_l_set, -1);
+  rb_define_method(SwigClassNotcursesOptions.klass, "margin_l", _wrap_NotcursesOptions_margin_l_get, -1);
+  rb_define_method(SwigClassNotcursesOptions.klass, "flags=", _wrap_NotcursesOptions_flags_set, -1);
+  rb_define_method(SwigClassNotcursesOptions.klass, "flags", _wrap_NotcursesOptions_flags_get, -1);
+  SwigClassNotcursesOptions.mark = 0;
+  SwigClassNotcursesOptions.destroy = (void (*)(void *)) free_notcurses_options;
+  SwigClassNotcursesOptions.trackObjects = 0;
   rb_define_module_function(mNotcurses, "notcurses_lex_margins", _wrap_notcurses_lex_margins, -1);
   rb_define_module_function(mNotcurses, "notcurses_lex_blitter", _wrap_notcurses_lex_blitter, -1);
   rb_define_module_function(mNotcurses, "notcurses_str_blitter", _wrap_notcurses_str_blitter, -1);
@@ -37632,30 +37766,30 @@ SWIGEXPORT void Init_notcurses(void) {
   
   SwigClassNcinput.klass = rb_define_class_under(mNotcurses, "Ncinput", rb_cObject);
   SWIG_TypeClientData(SWIGTYPE_p_ncinput, (void *) &SwigClassNcinput);
-  rb_define_alloc_func(SwigClassNcinput.klass, _wrap_ncinput_allocate);
-  rb_define_method(SwigClassNcinput.klass, "initialize", _wrap_new_ncinput, -1);
-  rb_define_method(SwigClassNcinput.klass, "id=", _wrap_ncinput_id_set, -1);
-  rb_define_method(SwigClassNcinput.klass, "id", _wrap_ncinput_id_get, -1);
-  rb_define_method(SwigClassNcinput.klass, "y=", _wrap_ncinput_y_set, -1);
-  rb_define_method(SwigClassNcinput.klass, "y", _wrap_ncinput_y_get, -1);
-  rb_define_method(SwigClassNcinput.klass, "x=", _wrap_ncinput_x_set, -1);
-  rb_define_method(SwigClassNcinput.klass, "x", _wrap_ncinput_x_get, -1);
-  rb_define_method(SwigClassNcinput.klass, "utf8=", _wrap_ncinput_utf8_set, -1);
-  rb_define_method(SwigClassNcinput.klass, "utf8", _wrap_ncinput_utf8_get, -1);
-  rb_define_method(SwigClassNcinput.klass, "alt=", _wrap_ncinput_alt_set, -1);
-  rb_define_method(SwigClassNcinput.klass, "alt", _wrap_ncinput_alt_get, -1);
-  rb_define_method(SwigClassNcinput.klass, "shift=", _wrap_ncinput_shift_set, -1);
-  rb_define_method(SwigClassNcinput.klass, "shift", _wrap_ncinput_shift_get, -1);
-  rb_define_method(SwigClassNcinput.klass, "ctrl=", _wrap_ncinput_ctrl_set, -1);
-  rb_define_method(SwigClassNcinput.klass, "ctrl", _wrap_ncinput_ctrl_get, -1);
-  rb_define_method(SwigClassNcinput.klass, "evtype=", _wrap_ncinput_evtype_set, -1);
-  rb_define_method(SwigClassNcinput.klass, "evtype", _wrap_ncinput_evtype_get, -1);
-  rb_define_method(SwigClassNcinput.klass, "modifiers=", _wrap_ncinput_modifiers_set, -1);
-  rb_define_method(SwigClassNcinput.klass, "modifiers", _wrap_ncinput_modifiers_get, -1);
-  rb_define_method(SwigClassNcinput.klass, "ypx=", _wrap_ncinput_ypx_set, -1);
-  rb_define_method(SwigClassNcinput.klass, "ypx", _wrap_ncinput_ypx_get, -1);
-  rb_define_method(SwigClassNcinput.klass, "xpx=", _wrap_ncinput_xpx_set, -1);
-  rb_define_method(SwigClassNcinput.klass, "xpx", _wrap_ncinput_xpx_get, -1);
+  rb_define_alloc_func(SwigClassNcinput.klass, _wrap_Ncinput_allocate);
+  rb_define_method(SwigClassNcinput.klass, "initialize", _wrap_new_Ncinput, -1);
+  rb_define_method(SwigClassNcinput.klass, "id=", _wrap_Ncinput_id_set, -1);
+  rb_define_method(SwigClassNcinput.klass, "id", _wrap_Ncinput_id_get, -1);
+  rb_define_method(SwigClassNcinput.klass, "y=", _wrap_Ncinput_y_set, -1);
+  rb_define_method(SwigClassNcinput.klass, "y", _wrap_Ncinput_y_get, -1);
+  rb_define_method(SwigClassNcinput.klass, "x=", _wrap_Ncinput_x_set, -1);
+  rb_define_method(SwigClassNcinput.klass, "x", _wrap_Ncinput_x_get, -1);
+  rb_define_method(SwigClassNcinput.klass, "utf8=", _wrap_Ncinput_utf8_set, -1);
+  rb_define_method(SwigClassNcinput.klass, "utf8", _wrap_Ncinput_utf8_get, -1);
+  rb_define_method(SwigClassNcinput.klass, "alt=", _wrap_Ncinput_alt_set, -1);
+  rb_define_method(SwigClassNcinput.klass, "alt", _wrap_Ncinput_alt_get, -1);
+  rb_define_method(SwigClassNcinput.klass, "shift=", _wrap_Ncinput_shift_set, -1);
+  rb_define_method(SwigClassNcinput.klass, "shift", _wrap_Ncinput_shift_get, -1);
+  rb_define_method(SwigClassNcinput.klass, "ctrl=", _wrap_Ncinput_ctrl_set, -1);
+  rb_define_method(SwigClassNcinput.klass, "ctrl", _wrap_Ncinput_ctrl_get, -1);
+  rb_define_method(SwigClassNcinput.klass, "evtype=", _wrap_Ncinput_evtype_set, -1);
+  rb_define_method(SwigClassNcinput.klass, "evtype", _wrap_Ncinput_evtype_get, -1);
+  rb_define_method(SwigClassNcinput.klass, "modifiers=", _wrap_Ncinput_modifiers_set, -1);
+  rb_define_method(SwigClassNcinput.klass, "modifiers", _wrap_Ncinput_modifiers_get, -1);
+  rb_define_method(SwigClassNcinput.klass, "ypx=", _wrap_Ncinput_ypx_set, -1);
+  rb_define_method(SwigClassNcinput.klass, "ypx", _wrap_Ncinput_ypx_get, -1);
+  rb_define_method(SwigClassNcinput.klass, "xpx=", _wrap_Ncinput_xpx_set, -1);
+  rb_define_method(SwigClassNcinput.klass, "xpx", _wrap_Ncinput_xpx_get, -1);
   SwigClassNcinput.mark = 0;
   SwigClassNcinput.destroy = (void (*)(void *)) free_ncinput;
   SwigClassNcinput.trackObjects = 0;
@@ -37701,33 +37835,33 @@ SWIGEXPORT void Init_notcurses(void) {
   rb_define_const(mNotcurses, "NCPLANE_OPTION_AUTOGROW", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0010ull)));
   rb_define_const(mNotcurses, "NCPLANE_OPTION_VSCROLL", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0020ull)));
   
-  SwigClassNcplane_options.klass = rb_define_class_under(mNotcurses, "Ncplane_options", rb_cObject);
-  SWIG_TypeClientData(SWIGTYPE_p_ncplane_options, (void *) &SwigClassNcplane_options);
-  rb_define_alloc_func(SwigClassNcplane_options.klass, _wrap_ncplane_options_allocate);
-  rb_define_method(SwigClassNcplane_options.klass, "initialize", _wrap_new_ncplane_options, -1);
-  rb_define_method(SwigClassNcplane_options.klass, "y=", _wrap_ncplane_options_y_set, -1);
-  rb_define_method(SwigClassNcplane_options.klass, "y", _wrap_ncplane_options_y_get, -1);
-  rb_define_method(SwigClassNcplane_options.klass, "x=", _wrap_ncplane_options_x_set, -1);
-  rb_define_method(SwigClassNcplane_options.klass, "x", _wrap_ncplane_options_x_get, -1);
-  rb_define_method(SwigClassNcplane_options.klass, "rows=", _wrap_ncplane_options_rows_set, -1);
-  rb_define_method(SwigClassNcplane_options.klass, "rows", _wrap_ncplane_options_rows_get, -1);
-  rb_define_method(SwigClassNcplane_options.klass, "cols=", _wrap_ncplane_options_cols_set, -1);
-  rb_define_method(SwigClassNcplane_options.klass, "cols", _wrap_ncplane_options_cols_get, -1);
-  rb_define_method(SwigClassNcplane_options.klass, "userptr=", _wrap_ncplane_options_userptr_set, -1);
-  rb_define_method(SwigClassNcplane_options.klass, "userptr", _wrap_ncplane_options_userptr_get, -1);
-  rb_define_method(SwigClassNcplane_options.klass, "name=", _wrap_ncplane_options_name_set, -1);
-  rb_define_method(SwigClassNcplane_options.klass, "name", _wrap_ncplane_options_name_get, -1);
-  rb_define_method(SwigClassNcplane_options.klass, "resizecb=", _wrap_ncplane_options_resizecb_set, -1);
-  rb_define_method(SwigClassNcplane_options.klass, "resizecb", _wrap_ncplane_options_resizecb_get, -1);
-  rb_define_method(SwigClassNcplane_options.klass, "flags=", _wrap_ncplane_options_flags_set, -1);
-  rb_define_method(SwigClassNcplane_options.klass, "flags", _wrap_ncplane_options_flags_get, -1);
-  rb_define_method(SwigClassNcplane_options.klass, "margin_b=", _wrap_ncplane_options_margin_b_set, -1);
-  rb_define_method(SwigClassNcplane_options.klass, "margin_b", _wrap_ncplane_options_margin_b_get, -1);
-  rb_define_method(SwigClassNcplane_options.klass, "margin_r=", _wrap_ncplane_options_margin_r_set, -1);
-  rb_define_method(SwigClassNcplane_options.klass, "margin_r", _wrap_ncplane_options_margin_r_get, -1);
-  SwigClassNcplane_options.mark = 0;
-  SwigClassNcplane_options.destroy = (void (*)(void *)) free_ncplane_options;
-  SwigClassNcplane_options.trackObjects = 0;
+  SwigClassNcplaneOptions.klass = rb_define_class_under(mNotcurses, "NcplaneOptions", rb_cObject);
+  SWIG_TypeClientData(SWIGTYPE_p_ncplane_options, (void *) &SwigClassNcplaneOptions);
+  rb_define_alloc_func(SwigClassNcplaneOptions.klass, _wrap_NcplaneOptions_allocate);
+  rb_define_method(SwigClassNcplaneOptions.klass, "initialize", _wrap_new_NcplaneOptions, -1);
+  rb_define_method(SwigClassNcplaneOptions.klass, "y=", _wrap_NcplaneOptions_y_set, -1);
+  rb_define_method(SwigClassNcplaneOptions.klass, "y", _wrap_NcplaneOptions_y_get, -1);
+  rb_define_method(SwigClassNcplaneOptions.klass, "x=", _wrap_NcplaneOptions_x_set, -1);
+  rb_define_method(SwigClassNcplaneOptions.klass, "x", _wrap_NcplaneOptions_x_get, -1);
+  rb_define_method(SwigClassNcplaneOptions.klass, "rows=", _wrap_NcplaneOptions_rows_set, -1);
+  rb_define_method(SwigClassNcplaneOptions.klass, "rows", _wrap_NcplaneOptions_rows_get, -1);
+  rb_define_method(SwigClassNcplaneOptions.klass, "cols=", _wrap_NcplaneOptions_cols_set, -1);
+  rb_define_method(SwigClassNcplaneOptions.klass, "cols", _wrap_NcplaneOptions_cols_get, -1);
+  rb_define_method(SwigClassNcplaneOptions.klass, "userptr=", _wrap_NcplaneOptions_userptr_set, -1);
+  rb_define_method(SwigClassNcplaneOptions.klass, "userptr", _wrap_NcplaneOptions_userptr_get, -1);
+  rb_define_method(SwigClassNcplaneOptions.klass, "name=", _wrap_NcplaneOptions_name_set, -1);
+  rb_define_method(SwigClassNcplaneOptions.klass, "name", _wrap_NcplaneOptions_name_get, -1);
+  rb_define_method(SwigClassNcplaneOptions.klass, "resizecb=", _wrap_NcplaneOptions_resizecb_set, -1);
+  rb_define_method(SwigClassNcplaneOptions.klass, "resizecb", _wrap_NcplaneOptions_resizecb_get, -1);
+  rb_define_method(SwigClassNcplaneOptions.klass, "flags=", _wrap_NcplaneOptions_flags_set, -1);
+  rb_define_method(SwigClassNcplaneOptions.klass, "flags", _wrap_NcplaneOptions_flags_get, -1);
+  rb_define_method(SwigClassNcplaneOptions.klass, "margin_b=", _wrap_NcplaneOptions_margin_b_set, -1);
+  rb_define_method(SwigClassNcplaneOptions.klass, "margin_b", _wrap_NcplaneOptions_margin_b_get, -1);
+  rb_define_method(SwigClassNcplaneOptions.klass, "margin_r=", _wrap_NcplaneOptions_margin_r_set, -1);
+  rb_define_method(SwigClassNcplaneOptions.klass, "margin_r", _wrap_NcplaneOptions_margin_r_get, -1);
+  SwigClassNcplaneOptions.mark = 0;
+  SwigClassNcplaneOptions.destroy = (void (*)(void *)) free_ncplane_options;
+  SwigClassNcplaneOptions.trackObjects = 0;
   rb_define_module_function(mNotcurses, "ncplane_create", _wrap_ncplane_create, -1);
   rb_define_module_function(mNotcurses, "ncpile_create", _wrap_ncpile_create, -1);
   rb_define_module_function(mNotcurses, "ncplane_resize_maximize", _wrap_ncplane_resize_maximize, -1);
@@ -37750,10 +37884,10 @@ SWIGEXPORT void Init_notcurses(void) {
   
   SwigClassNcpalette.klass = rb_define_class_under(mNotcurses, "Ncpalette", rb_cObject);
   SWIG_TypeClientData(SWIGTYPE_p_ncpalette, (void *) &SwigClassNcpalette);
-  rb_define_alloc_func(SwigClassNcpalette.klass, _wrap_ncpalette_allocate);
-  rb_define_method(SwigClassNcpalette.klass, "initialize", _wrap_new_ncpalette, -1);
-  rb_define_method(SwigClassNcpalette.klass, "chans=", _wrap_ncpalette_chans_set, -1);
-  rb_define_method(SwigClassNcpalette.klass, "chans", _wrap_ncpalette_chans_get, -1);
+  rb_define_alloc_func(SwigClassNcpalette.klass, _wrap_Ncpalette_allocate);
+  rb_define_method(SwigClassNcpalette.klass, "initialize", _wrap_new_Ncpalette, -1);
+  rb_define_method(SwigClassNcpalette.klass, "chans=", _wrap_Ncpalette_chans_set, -1);
+  rb_define_method(SwigClassNcpalette.klass, "chans", _wrap_Ncpalette_chans_get, -1);
   SwigClassNcpalette.mark = 0;
   SwigClassNcpalette.destroy = (void (*)(void *)) free_ncpalette;
   SwigClassNcpalette.trackObjects = 0;
@@ -37767,24 +37901,24 @@ SWIGEXPORT void Init_notcurses(void) {
   
   SwigClassNccapabilities.klass = rb_define_class_under(mNotcurses, "Nccapabilities", rb_cObject);
   SWIG_TypeClientData(SWIGTYPE_p_nccapabilities, (void *) &SwigClassNccapabilities);
-  rb_define_alloc_func(SwigClassNccapabilities.klass, _wrap_nccapabilities_allocate);
-  rb_define_method(SwigClassNccapabilities.klass, "initialize", _wrap_new_nccapabilities, -1);
-  rb_define_method(SwigClassNccapabilities.klass, "colors=", _wrap_nccapabilities_colors_set, -1);
-  rb_define_method(SwigClassNccapabilities.klass, "colors", _wrap_nccapabilities_colors_get, -1);
-  rb_define_method(SwigClassNccapabilities.klass, "utf8=", _wrap_nccapabilities_utf8_set, -1);
-  rb_define_method(SwigClassNccapabilities.klass, "utf8", _wrap_nccapabilities_utf8_get, -1);
-  rb_define_method(SwigClassNccapabilities.klass, "rgb=", _wrap_nccapabilities_rgb_set, -1);
-  rb_define_method(SwigClassNccapabilities.klass, "rgb", _wrap_nccapabilities_rgb_get, -1);
-  rb_define_method(SwigClassNccapabilities.klass, "can_change_colors=", _wrap_nccapabilities_can_change_colors_set, -1);
-  rb_define_method(SwigClassNccapabilities.klass, "can_change_colors", _wrap_nccapabilities_can_change_colors_get, -1);
-  rb_define_method(SwigClassNccapabilities.klass, "halfblocks=", _wrap_nccapabilities_halfblocks_set, -1);
-  rb_define_method(SwigClassNccapabilities.klass, "halfblocks", _wrap_nccapabilities_halfblocks_get, -1);
-  rb_define_method(SwigClassNccapabilities.klass, "quadrants=", _wrap_nccapabilities_quadrants_set, -1);
-  rb_define_method(SwigClassNccapabilities.klass, "quadrants", _wrap_nccapabilities_quadrants_get, -1);
-  rb_define_method(SwigClassNccapabilities.klass, "sextants=", _wrap_nccapabilities_sextants_set, -1);
-  rb_define_method(SwigClassNccapabilities.klass, "sextants", _wrap_nccapabilities_sextants_get, -1);
-  rb_define_method(SwigClassNccapabilities.klass, "braille=", _wrap_nccapabilities_braille_set, -1);
-  rb_define_method(SwigClassNccapabilities.klass, "braille", _wrap_nccapabilities_braille_get, -1);
+  rb_define_alloc_func(SwigClassNccapabilities.klass, _wrap_Nccapabilities_allocate);
+  rb_define_method(SwigClassNccapabilities.klass, "initialize", _wrap_new_Nccapabilities, -1);
+  rb_define_method(SwigClassNccapabilities.klass, "colors=", _wrap_Nccapabilities_colors_set, -1);
+  rb_define_method(SwigClassNccapabilities.klass, "colors", _wrap_Nccapabilities_colors_get, -1);
+  rb_define_method(SwigClassNccapabilities.klass, "utf8=", _wrap_Nccapabilities_utf8_set, -1);
+  rb_define_method(SwigClassNccapabilities.klass, "utf8", _wrap_Nccapabilities_utf8_get, -1);
+  rb_define_method(SwigClassNccapabilities.klass, "rgb=", _wrap_Nccapabilities_rgb_set, -1);
+  rb_define_method(SwigClassNccapabilities.klass, "rgb", _wrap_Nccapabilities_rgb_get, -1);
+  rb_define_method(SwigClassNccapabilities.klass, "can_change_colors=", _wrap_Nccapabilities_can_change_colors_set, -1);
+  rb_define_method(SwigClassNccapabilities.klass, "can_change_colors", _wrap_Nccapabilities_can_change_colors_get, -1);
+  rb_define_method(SwigClassNccapabilities.klass, "halfblocks=", _wrap_Nccapabilities_halfblocks_set, -1);
+  rb_define_method(SwigClassNccapabilities.klass, "halfblocks", _wrap_Nccapabilities_halfblocks_get, -1);
+  rb_define_method(SwigClassNccapabilities.klass, "quadrants=", _wrap_Nccapabilities_quadrants_set, -1);
+  rb_define_method(SwigClassNccapabilities.klass, "quadrants", _wrap_Nccapabilities_quadrants_get, -1);
+  rb_define_method(SwigClassNccapabilities.klass, "sextants=", _wrap_Nccapabilities_sextants_set, -1);
+  rb_define_method(SwigClassNccapabilities.klass, "sextants", _wrap_Nccapabilities_sextants_get, -1);
+  rb_define_method(SwigClassNccapabilities.klass, "braille=", _wrap_Nccapabilities_braille_set, -1);
+  rb_define_method(SwigClassNccapabilities.klass, "braille", _wrap_Nccapabilities_braille_get, -1);
   SwigClassNccapabilities.mark = 0;
   SwigClassNccapabilities.destroy = (void (*)(void *)) free_nccapabilities;
   SwigClassNccapabilities.trackObjects = 0;
@@ -37815,80 +37949,80 @@ SWIGEXPORT void Init_notcurses(void) {
   
   SwigClassNcstats.klass = rb_define_class_under(mNotcurses, "Ncstats", rb_cObject);
   SWIG_TypeClientData(SWIGTYPE_p_ncstats, (void *) &SwigClassNcstats);
-  rb_define_alloc_func(SwigClassNcstats.klass, _wrap_ncstats_allocate);
-  rb_define_method(SwigClassNcstats.klass, "initialize", _wrap_new_ncstats, -1);
-  rb_define_method(SwigClassNcstats.klass, "renders=", _wrap_ncstats_renders_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "renders", _wrap_ncstats_renders_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "writeouts=", _wrap_ncstats_writeouts_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "writeouts", _wrap_ncstats_writeouts_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "failed_renders=", _wrap_ncstats_failed_renders_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "failed_renders", _wrap_ncstats_failed_renders_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "failed_writeouts=", _wrap_ncstats_failed_writeouts_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "failed_writeouts", _wrap_ncstats_failed_writeouts_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "raster_bytes=", _wrap_ncstats_raster_bytes_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "raster_bytes", _wrap_ncstats_raster_bytes_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "raster_max_bytes=", _wrap_ncstats_raster_max_bytes_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "raster_max_bytes", _wrap_ncstats_raster_max_bytes_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "raster_min_bytes=", _wrap_ncstats_raster_min_bytes_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "raster_min_bytes", _wrap_ncstats_raster_min_bytes_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "render_ns=", _wrap_ncstats_render_ns_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "render_ns", _wrap_ncstats_render_ns_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "render_max_ns=", _wrap_ncstats_render_max_ns_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "render_max_ns", _wrap_ncstats_render_max_ns_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "render_min_ns=", _wrap_ncstats_render_min_ns_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "render_min_ns", _wrap_ncstats_render_min_ns_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "raster_ns=", _wrap_ncstats_raster_ns_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "raster_ns", _wrap_ncstats_raster_ns_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "raster_max_ns=", _wrap_ncstats_raster_max_ns_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "raster_max_ns", _wrap_ncstats_raster_max_ns_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "raster_min_ns=", _wrap_ncstats_raster_min_ns_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "raster_min_ns", _wrap_ncstats_raster_min_ns_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "writeout_ns=", _wrap_ncstats_writeout_ns_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "writeout_ns", _wrap_ncstats_writeout_ns_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "writeout_max_ns=", _wrap_ncstats_writeout_max_ns_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "writeout_max_ns", _wrap_ncstats_writeout_max_ns_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "writeout_min_ns=", _wrap_ncstats_writeout_min_ns_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "writeout_min_ns", _wrap_ncstats_writeout_min_ns_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "cellelisions=", _wrap_ncstats_cellelisions_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "cellelisions", _wrap_ncstats_cellelisions_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "cellemissions=", _wrap_ncstats_cellemissions_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "cellemissions", _wrap_ncstats_cellemissions_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "fgelisions=", _wrap_ncstats_fgelisions_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "fgelisions", _wrap_ncstats_fgelisions_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "fgemissions=", _wrap_ncstats_fgemissions_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "fgemissions", _wrap_ncstats_fgemissions_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "bgelisions=", _wrap_ncstats_bgelisions_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "bgelisions", _wrap_ncstats_bgelisions_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "bgemissions=", _wrap_ncstats_bgemissions_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "bgemissions", _wrap_ncstats_bgemissions_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "defaultelisions=", _wrap_ncstats_defaultelisions_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "defaultelisions", _wrap_ncstats_defaultelisions_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "defaultemissions=", _wrap_ncstats_defaultemissions_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "defaultemissions", _wrap_ncstats_defaultemissions_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "refreshes=", _wrap_ncstats_refreshes_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "refreshes", _wrap_ncstats_refreshes_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "sprixelemissions=", _wrap_ncstats_sprixelemissions_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "sprixelemissions", _wrap_ncstats_sprixelemissions_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "sprixelelisions=", _wrap_ncstats_sprixelelisions_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "sprixelelisions", _wrap_ncstats_sprixelelisions_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "sprixelbytes=", _wrap_ncstats_sprixelbytes_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "sprixelbytes", _wrap_ncstats_sprixelbytes_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "appsync_updates=", _wrap_ncstats_appsync_updates_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "appsync_updates", _wrap_ncstats_appsync_updates_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "input_errors=", _wrap_ncstats_input_errors_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "input_errors", _wrap_ncstats_input_errors_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "input_events=", _wrap_ncstats_input_events_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "input_events", _wrap_ncstats_input_events_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "hpa_gratuitous=", _wrap_ncstats_hpa_gratuitous_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "hpa_gratuitous", _wrap_ncstats_hpa_gratuitous_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "cell_geo_changes=", _wrap_ncstats_cell_geo_changes_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "cell_geo_changes", _wrap_ncstats_cell_geo_changes_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "pixel_geo_changes=", _wrap_ncstats_pixel_geo_changes_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "pixel_geo_changes", _wrap_ncstats_pixel_geo_changes_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "fbbytes=", _wrap_ncstats_fbbytes_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "fbbytes", _wrap_ncstats_fbbytes_get, -1);
-  rb_define_method(SwigClassNcstats.klass, "planes=", _wrap_ncstats_planes_set, -1);
-  rb_define_method(SwigClassNcstats.klass, "planes", _wrap_ncstats_planes_get, -1);
+  rb_define_alloc_func(SwigClassNcstats.klass, _wrap_Ncstats_allocate);
+  rb_define_method(SwigClassNcstats.klass, "initialize", _wrap_new_Ncstats, -1);
+  rb_define_method(SwigClassNcstats.klass, "renders=", _wrap_Ncstats_renders_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "renders", _wrap_Ncstats_renders_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "writeouts=", _wrap_Ncstats_writeouts_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "writeouts", _wrap_Ncstats_writeouts_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "failed_renders=", _wrap_Ncstats_failed_renders_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "failed_renders", _wrap_Ncstats_failed_renders_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "failed_writeouts=", _wrap_Ncstats_failed_writeouts_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "failed_writeouts", _wrap_Ncstats_failed_writeouts_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "raster_bytes=", _wrap_Ncstats_raster_bytes_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "raster_bytes", _wrap_Ncstats_raster_bytes_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "raster_max_bytes=", _wrap_Ncstats_raster_max_bytes_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "raster_max_bytes", _wrap_Ncstats_raster_max_bytes_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "raster_min_bytes=", _wrap_Ncstats_raster_min_bytes_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "raster_min_bytes", _wrap_Ncstats_raster_min_bytes_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "render_ns=", _wrap_Ncstats_render_ns_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "render_ns", _wrap_Ncstats_render_ns_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "render_max_ns=", _wrap_Ncstats_render_max_ns_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "render_max_ns", _wrap_Ncstats_render_max_ns_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "render_min_ns=", _wrap_Ncstats_render_min_ns_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "render_min_ns", _wrap_Ncstats_render_min_ns_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "raster_ns=", _wrap_Ncstats_raster_ns_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "raster_ns", _wrap_Ncstats_raster_ns_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "raster_max_ns=", _wrap_Ncstats_raster_max_ns_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "raster_max_ns", _wrap_Ncstats_raster_max_ns_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "raster_min_ns=", _wrap_Ncstats_raster_min_ns_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "raster_min_ns", _wrap_Ncstats_raster_min_ns_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "writeout_ns=", _wrap_Ncstats_writeout_ns_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "writeout_ns", _wrap_Ncstats_writeout_ns_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "writeout_max_ns=", _wrap_Ncstats_writeout_max_ns_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "writeout_max_ns", _wrap_Ncstats_writeout_max_ns_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "writeout_min_ns=", _wrap_Ncstats_writeout_min_ns_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "writeout_min_ns", _wrap_Ncstats_writeout_min_ns_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "cellelisions=", _wrap_Ncstats_cellelisions_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "cellelisions", _wrap_Ncstats_cellelisions_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "cellemissions=", _wrap_Ncstats_cellemissions_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "cellemissions", _wrap_Ncstats_cellemissions_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "fgelisions=", _wrap_Ncstats_fgelisions_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "fgelisions", _wrap_Ncstats_fgelisions_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "fgemissions=", _wrap_Ncstats_fgemissions_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "fgemissions", _wrap_Ncstats_fgemissions_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "bgelisions=", _wrap_Ncstats_bgelisions_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "bgelisions", _wrap_Ncstats_bgelisions_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "bgemissions=", _wrap_Ncstats_bgemissions_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "bgemissions", _wrap_Ncstats_bgemissions_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "defaultelisions=", _wrap_Ncstats_defaultelisions_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "defaultelisions", _wrap_Ncstats_defaultelisions_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "defaultemissions=", _wrap_Ncstats_defaultemissions_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "defaultemissions", _wrap_Ncstats_defaultemissions_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "refreshes=", _wrap_Ncstats_refreshes_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "refreshes", _wrap_Ncstats_refreshes_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "sprixelemissions=", _wrap_Ncstats_sprixelemissions_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "sprixelemissions", _wrap_Ncstats_sprixelemissions_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "sprixelelisions=", _wrap_Ncstats_sprixelelisions_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "sprixelelisions", _wrap_Ncstats_sprixelelisions_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "sprixelbytes=", _wrap_Ncstats_sprixelbytes_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "sprixelbytes", _wrap_Ncstats_sprixelbytes_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "appsync_updates=", _wrap_Ncstats_appsync_updates_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "appsync_updates", _wrap_Ncstats_appsync_updates_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "input_errors=", _wrap_Ncstats_input_errors_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "input_errors", _wrap_Ncstats_input_errors_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "input_events=", _wrap_Ncstats_input_events_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "input_events", _wrap_Ncstats_input_events_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "hpa_gratuitous=", _wrap_Ncstats_hpa_gratuitous_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "hpa_gratuitous", _wrap_Ncstats_hpa_gratuitous_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "cell_geo_changes=", _wrap_Ncstats_cell_geo_changes_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "cell_geo_changes", _wrap_Ncstats_cell_geo_changes_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "pixel_geo_changes=", _wrap_Ncstats_pixel_geo_changes_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "pixel_geo_changes", _wrap_Ncstats_pixel_geo_changes_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "fbbytes=", _wrap_Ncstats_fbbytes_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "fbbytes", _wrap_Ncstats_fbbytes_get, -1);
+  rb_define_method(SwigClassNcstats.klass, "planes=", _wrap_Ncstats_planes_set, -1);
+  rb_define_method(SwigClassNcstats.klass, "planes", _wrap_Ncstats_planes_get, -1);
   SwigClassNcstats.mark = 0;
   SwigClassNcstats.destroy = (void (*)(void *)) free_ncstats;
   SwigClassNcstats.trackObjects = 0;
@@ -38090,78 +38224,78 @@ SWIGEXPORT void Init_notcurses(void) {
   rb_define_const(mNotcurses, "NCVISUAL_OPTION_CHILDPLANE", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0020ull)));
   rb_define_const(mNotcurses, "NCVISUAL_OPTION_NOINTERPOLATE", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0040ull)));
   
-  SwigClassNcvisual_options.klass = rb_define_class_under(mNotcurses, "Ncvisual_options", rb_cObject);
-  SWIG_TypeClientData(SWIGTYPE_p_ncvisual_options, (void *) &SwigClassNcvisual_options);
-  rb_define_alloc_func(SwigClassNcvisual_options.klass, _wrap_ncvisual_options_allocate);
-  rb_define_method(SwigClassNcvisual_options.klass, "initialize", _wrap_new_ncvisual_options, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "n=", _wrap_ncvisual_options_n_set, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "n", _wrap_ncvisual_options_n_get, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "scaling=", _wrap_ncvisual_options_scaling_set, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "scaling", _wrap_ncvisual_options_scaling_get, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "y=", _wrap_ncvisual_options_y_set, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "y", _wrap_ncvisual_options_y_get, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "x=", _wrap_ncvisual_options_x_set, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "x", _wrap_ncvisual_options_x_get, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "begy=", _wrap_ncvisual_options_begy_set, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "begy", _wrap_ncvisual_options_begy_get, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "begx=", _wrap_ncvisual_options_begx_set, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "begx", _wrap_ncvisual_options_begx_get, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "leny=", _wrap_ncvisual_options_leny_set, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "leny", _wrap_ncvisual_options_leny_get, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "lenx=", _wrap_ncvisual_options_lenx_set, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "lenx", _wrap_ncvisual_options_lenx_get, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "blitter=", _wrap_ncvisual_options_blitter_set, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "blitter", _wrap_ncvisual_options_blitter_get, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "flags=", _wrap_ncvisual_options_flags_set, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "flags", _wrap_ncvisual_options_flags_get, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "transcolor=", _wrap_ncvisual_options_transcolor_set, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "transcolor", _wrap_ncvisual_options_transcolor_get, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "pxoffy=", _wrap_ncvisual_options_pxoffy_set, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "pxoffy", _wrap_ncvisual_options_pxoffy_get, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "pxoffx=", _wrap_ncvisual_options_pxoffx_set, -1);
-  rb_define_method(SwigClassNcvisual_options.klass, "pxoffx", _wrap_ncvisual_options_pxoffx_get, -1);
-  SwigClassNcvisual_options.mark = 0;
-  SwigClassNcvisual_options.destroy = (void (*)(void *)) free_ncvisual_options;
-  SwigClassNcvisual_options.trackObjects = 0;
+  SwigClassNcvisualOptions.klass = rb_define_class_under(mNotcurses, "NcvisualOptions", rb_cObject);
+  SWIG_TypeClientData(SWIGTYPE_p_ncvisual_options, (void *) &SwigClassNcvisualOptions);
+  rb_define_alloc_func(SwigClassNcvisualOptions.klass, _wrap_NcvisualOptions_allocate);
+  rb_define_method(SwigClassNcvisualOptions.klass, "initialize", _wrap_new_NcvisualOptions, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "n=", _wrap_NcvisualOptions_n_set, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "n", _wrap_NcvisualOptions_n_get, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "scaling=", _wrap_NcvisualOptions_scaling_set, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "scaling", _wrap_NcvisualOptions_scaling_get, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "y=", _wrap_NcvisualOptions_y_set, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "y", _wrap_NcvisualOptions_y_get, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "x=", _wrap_NcvisualOptions_x_set, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "x", _wrap_NcvisualOptions_x_get, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "begy=", _wrap_NcvisualOptions_begy_set, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "begy", _wrap_NcvisualOptions_begy_get, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "begx=", _wrap_NcvisualOptions_begx_set, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "begx", _wrap_NcvisualOptions_begx_get, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "leny=", _wrap_NcvisualOptions_leny_set, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "leny", _wrap_NcvisualOptions_leny_get, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "lenx=", _wrap_NcvisualOptions_lenx_set, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "lenx", _wrap_NcvisualOptions_lenx_get, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "blitter=", _wrap_NcvisualOptions_blitter_set, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "blitter", _wrap_NcvisualOptions_blitter_get, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "flags=", _wrap_NcvisualOptions_flags_set, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "flags", _wrap_NcvisualOptions_flags_get, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "transcolor=", _wrap_NcvisualOptions_transcolor_set, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "transcolor", _wrap_NcvisualOptions_transcolor_get, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "pxoffy=", _wrap_NcvisualOptions_pxoffy_set, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "pxoffy", _wrap_NcvisualOptions_pxoffy_get, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "pxoffx=", _wrap_NcvisualOptions_pxoffx_set, -1);
+  rb_define_method(SwigClassNcvisualOptions.klass, "pxoffx", _wrap_NcvisualOptions_pxoffx_get, -1);
+  SwigClassNcvisualOptions.mark = 0;
+  SwigClassNcvisualOptions.destroy = (void (*)(void *)) free_ncvisual_options;
+  SwigClassNcvisualOptions.trackObjects = 0;
   
   SwigClassNcvgeom.klass = rb_define_class_under(mNotcurses, "Ncvgeom", rb_cObject);
   SWIG_TypeClientData(SWIGTYPE_p_ncvgeom, (void *) &SwigClassNcvgeom);
-  rb_define_alloc_func(SwigClassNcvgeom.klass, _wrap_ncvgeom_allocate);
-  rb_define_method(SwigClassNcvgeom.klass, "initialize", _wrap_new_ncvgeom, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "pixy=", _wrap_ncvgeom_pixy_set, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "pixy", _wrap_ncvgeom_pixy_get, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "pixx=", _wrap_ncvgeom_pixx_set, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "pixx", _wrap_ncvgeom_pixx_get, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "cdimy=", _wrap_ncvgeom_cdimy_set, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "cdimy", _wrap_ncvgeom_cdimy_get, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "cdimx=", _wrap_ncvgeom_cdimx_set, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "cdimx", _wrap_ncvgeom_cdimx_get, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "rpixy=", _wrap_ncvgeom_rpixy_set, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "rpixy", _wrap_ncvgeom_rpixy_get, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "rpixx=", _wrap_ncvgeom_rpixx_set, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "rpixx", _wrap_ncvgeom_rpixx_get, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "rcelly=", _wrap_ncvgeom_rcelly_set, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "rcelly", _wrap_ncvgeom_rcelly_get, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "rcellx=", _wrap_ncvgeom_rcellx_set, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "rcellx", _wrap_ncvgeom_rcellx_get, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "scaley=", _wrap_ncvgeom_scaley_set, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "scaley", _wrap_ncvgeom_scaley_get, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "scalex=", _wrap_ncvgeom_scalex_set, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "scalex", _wrap_ncvgeom_scalex_get, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "begy=", _wrap_ncvgeom_begy_set, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "begy", _wrap_ncvgeom_begy_get, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "begx=", _wrap_ncvgeom_begx_set, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "begx", _wrap_ncvgeom_begx_get, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "leny=", _wrap_ncvgeom_leny_set, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "leny", _wrap_ncvgeom_leny_get, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "lenx=", _wrap_ncvgeom_lenx_set, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "lenx", _wrap_ncvgeom_lenx_get, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "maxpixely=", _wrap_ncvgeom_maxpixely_set, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "maxpixely", _wrap_ncvgeom_maxpixely_get, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "maxpixelx=", _wrap_ncvgeom_maxpixelx_set, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "maxpixelx", _wrap_ncvgeom_maxpixelx_get, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "blitter=", _wrap_ncvgeom_blitter_set, -1);
-  rb_define_method(SwigClassNcvgeom.klass, "blitter", _wrap_ncvgeom_blitter_get, -1);
+  rb_define_alloc_func(SwigClassNcvgeom.klass, _wrap_Ncvgeom_allocate);
+  rb_define_method(SwigClassNcvgeom.klass, "initialize", _wrap_new_Ncvgeom, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "pixy=", _wrap_Ncvgeom_pixy_set, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "pixy", _wrap_Ncvgeom_pixy_get, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "pixx=", _wrap_Ncvgeom_pixx_set, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "pixx", _wrap_Ncvgeom_pixx_get, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "cdimy=", _wrap_Ncvgeom_cdimy_set, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "cdimy", _wrap_Ncvgeom_cdimy_get, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "cdimx=", _wrap_Ncvgeom_cdimx_set, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "cdimx", _wrap_Ncvgeom_cdimx_get, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "rpixy=", _wrap_Ncvgeom_rpixy_set, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "rpixy", _wrap_Ncvgeom_rpixy_get, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "rpixx=", _wrap_Ncvgeom_rpixx_set, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "rpixx", _wrap_Ncvgeom_rpixx_get, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "rcelly=", _wrap_Ncvgeom_rcelly_set, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "rcelly", _wrap_Ncvgeom_rcelly_get, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "rcellx=", _wrap_Ncvgeom_rcellx_set, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "rcellx", _wrap_Ncvgeom_rcellx_get, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "scaley=", _wrap_Ncvgeom_scaley_set, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "scaley", _wrap_Ncvgeom_scaley_get, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "scalex=", _wrap_Ncvgeom_scalex_set, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "scalex", _wrap_Ncvgeom_scalex_get, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "begy=", _wrap_Ncvgeom_begy_set, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "begy", _wrap_Ncvgeom_begy_get, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "begx=", _wrap_Ncvgeom_begx_set, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "begx", _wrap_Ncvgeom_begx_get, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "leny=", _wrap_Ncvgeom_leny_set, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "leny", _wrap_Ncvgeom_leny_get, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "lenx=", _wrap_Ncvgeom_lenx_set, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "lenx", _wrap_Ncvgeom_lenx_get, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "maxpixely=", _wrap_Ncvgeom_maxpixely_set, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "maxpixely", _wrap_Ncvgeom_maxpixely_get, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "maxpixelx=", _wrap_Ncvgeom_maxpixelx_set, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "maxpixelx", _wrap_Ncvgeom_maxpixelx_get, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "blitter=", _wrap_Ncvgeom_blitter_set, -1);
+  rb_define_method(SwigClassNcvgeom.klass, "blitter", _wrap_Ncvgeom_blitter_get, -1);
   SwigClassNcvgeom.mark = 0;
   SwigClassNcvgeom.destroy = (void (*)(void *)) free_ncvgeom;
   SwigClassNcvgeom.trackObjects = 0;
@@ -38198,25 +38332,25 @@ SWIGEXPORT void Init_notcurses(void) {
   rb_define_const(mNotcurses, "NCREEL_OPTION_INFINITESCROLL", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0001ull)));
   rb_define_const(mNotcurses, "NCREEL_OPTION_CIRCULAR", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0002ull)));
   
-  SwigClassNcreel_options.klass = rb_define_class_under(mNotcurses, "Ncreel_options", rb_cObject);
-  SWIG_TypeClientData(SWIGTYPE_p_ncreel_options, (void *) &SwigClassNcreel_options);
-  rb_define_alloc_func(SwigClassNcreel_options.klass, _wrap_ncreel_options_allocate);
-  rb_define_method(SwigClassNcreel_options.klass, "initialize", _wrap_new_ncreel_options, -1);
-  rb_define_method(SwigClassNcreel_options.klass, "bordermask=", _wrap_ncreel_options_bordermask_set, -1);
-  rb_define_method(SwigClassNcreel_options.klass, "bordermask", _wrap_ncreel_options_bordermask_get, -1);
-  rb_define_method(SwigClassNcreel_options.klass, "borderchan=", _wrap_ncreel_options_borderchan_set, -1);
-  rb_define_method(SwigClassNcreel_options.klass, "borderchan", _wrap_ncreel_options_borderchan_get, -1);
-  rb_define_method(SwigClassNcreel_options.klass, "tabletmask=", _wrap_ncreel_options_tabletmask_set, -1);
-  rb_define_method(SwigClassNcreel_options.klass, "tabletmask", _wrap_ncreel_options_tabletmask_get, -1);
-  rb_define_method(SwigClassNcreel_options.klass, "tabletchan=", _wrap_ncreel_options_tabletchan_set, -1);
-  rb_define_method(SwigClassNcreel_options.klass, "tabletchan", _wrap_ncreel_options_tabletchan_get, -1);
-  rb_define_method(SwigClassNcreel_options.klass, "focusedchan=", _wrap_ncreel_options_focusedchan_set, -1);
-  rb_define_method(SwigClassNcreel_options.klass, "focusedchan", _wrap_ncreel_options_focusedchan_get, -1);
-  rb_define_method(SwigClassNcreel_options.klass, "flags=", _wrap_ncreel_options_flags_set, -1);
-  rb_define_method(SwigClassNcreel_options.klass, "flags", _wrap_ncreel_options_flags_get, -1);
-  SwigClassNcreel_options.mark = 0;
-  SwigClassNcreel_options.destroy = (void (*)(void *)) free_ncreel_options;
-  SwigClassNcreel_options.trackObjects = 0;
+  SwigClassNcreelOptions.klass = rb_define_class_under(mNotcurses, "NcreelOptions", rb_cObject);
+  SWIG_TypeClientData(SWIGTYPE_p_ncreel_options, (void *) &SwigClassNcreelOptions);
+  rb_define_alloc_func(SwigClassNcreelOptions.klass, _wrap_NcreelOptions_allocate);
+  rb_define_method(SwigClassNcreelOptions.klass, "initialize", _wrap_new_NcreelOptions, -1);
+  rb_define_method(SwigClassNcreelOptions.klass, "bordermask=", _wrap_NcreelOptions_bordermask_set, -1);
+  rb_define_method(SwigClassNcreelOptions.klass, "bordermask", _wrap_NcreelOptions_bordermask_get, -1);
+  rb_define_method(SwigClassNcreelOptions.klass, "borderchan=", _wrap_NcreelOptions_borderchan_set, -1);
+  rb_define_method(SwigClassNcreelOptions.klass, "borderchan", _wrap_NcreelOptions_borderchan_get, -1);
+  rb_define_method(SwigClassNcreelOptions.klass, "tabletmask=", _wrap_NcreelOptions_tabletmask_set, -1);
+  rb_define_method(SwigClassNcreelOptions.klass, "tabletmask", _wrap_NcreelOptions_tabletmask_get, -1);
+  rb_define_method(SwigClassNcreelOptions.klass, "tabletchan=", _wrap_NcreelOptions_tabletchan_set, -1);
+  rb_define_method(SwigClassNcreelOptions.klass, "tabletchan", _wrap_NcreelOptions_tabletchan_get, -1);
+  rb_define_method(SwigClassNcreelOptions.klass, "focusedchan=", _wrap_NcreelOptions_focusedchan_set, -1);
+  rb_define_method(SwigClassNcreelOptions.klass, "focusedchan", _wrap_NcreelOptions_focusedchan_get, -1);
+  rb_define_method(SwigClassNcreelOptions.klass, "flags=", _wrap_NcreelOptions_flags_set, -1);
+  rb_define_method(SwigClassNcreelOptions.klass, "flags", _wrap_NcreelOptions_flags_get, -1);
+  SwigClassNcreelOptions.mark = 0;
+  SwigClassNcreelOptions.destroy = (void (*)(void *)) free_ncreel_options;
+  SwigClassNcreelOptions.trackObjects = 0;
   rb_define_module_function(mNotcurses, "ncreel_create", _wrap_ncreel_create, -1);
   rb_define_module_function(mNotcurses, "ncreel_plane", _wrap_ncreel_plane, -1);
   rb_define_module_function(mNotcurses, "ncreel_add", _wrap_ncreel_add, -1);
@@ -38247,49 +38381,49 @@ SWIGEXPORT void Init_notcurses(void) {
   rb_define_module_function(mNotcurses, "notcurses_cursor_yx", _wrap_notcurses_cursor_yx, -1);
   rb_define_module_function(mNotcurses, "ncplane_greyscale", _wrap_ncplane_greyscale, -1);
   
-  SwigClassNcselector_item.klass = rb_define_class_under(mNotcurses, "Ncselector_item", rb_cObject);
-  SWIG_TypeClientData(SWIGTYPE_p_ncselector_item, (void *) &SwigClassNcselector_item);
-  rb_define_alloc_func(SwigClassNcselector_item.klass, _wrap_ncselector_item_allocate);
-  rb_define_method(SwigClassNcselector_item.klass, "initialize", _wrap_new_ncselector_item, -1);
-  rb_define_method(SwigClassNcselector_item.klass, "option=", _wrap_ncselector_item_option_set, -1);
-  rb_define_method(SwigClassNcselector_item.klass, "option", _wrap_ncselector_item_option_get, -1);
-  rb_define_method(SwigClassNcselector_item.klass, "desc=", _wrap_ncselector_item_desc_set, -1);
-  rb_define_method(SwigClassNcselector_item.klass, "desc", _wrap_ncselector_item_desc_get, -1);
-  SwigClassNcselector_item.mark = 0;
-  SwigClassNcselector_item.destroy = (void (*)(void *)) free_ncselector_item;
-  SwigClassNcselector_item.trackObjects = 0;
+  SwigClassNcselectorItem.klass = rb_define_class_under(mNotcurses, "NcselectorItem", rb_cObject);
+  SWIG_TypeClientData(SWIGTYPE_p_ncselector_item, (void *) &SwigClassNcselectorItem);
+  rb_define_alloc_func(SwigClassNcselectorItem.klass, _wrap_NcselectorItem_allocate);
+  rb_define_method(SwigClassNcselectorItem.klass, "initialize", _wrap_new_NcselectorItem, -1);
+  rb_define_method(SwigClassNcselectorItem.klass, "option=", _wrap_NcselectorItem_option_set, -1);
+  rb_define_method(SwigClassNcselectorItem.klass, "option", _wrap_NcselectorItem_option_get, -1);
+  rb_define_method(SwigClassNcselectorItem.klass, "desc=", _wrap_NcselectorItem_desc_set, -1);
+  rb_define_method(SwigClassNcselectorItem.klass, "desc", _wrap_NcselectorItem_desc_get, -1);
+  SwigClassNcselectorItem.mark = 0;
+  SwigClassNcselectorItem.destroy = (void (*)(void *)) free_ncselector_item;
+  SwigClassNcselectorItem.trackObjects = 0;
   
-  SwigClassNcselector_options.klass = rb_define_class_under(mNotcurses, "Ncselector_options", rb_cObject);
-  SWIG_TypeClientData(SWIGTYPE_p_ncselector_options, (void *) &SwigClassNcselector_options);
-  rb_define_alloc_func(SwigClassNcselector_options.klass, _wrap_ncselector_options_allocate);
-  rb_define_method(SwigClassNcselector_options.klass, "initialize", _wrap_new_ncselector_options, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "title=", _wrap_ncselector_options_title_set, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "title", _wrap_ncselector_options_title_get, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "secondary=", _wrap_ncselector_options_secondary_set, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "secondary", _wrap_ncselector_options_secondary_get, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "footer=", _wrap_ncselector_options_footer_set, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "footer", _wrap_ncselector_options_footer_get, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "items=", _wrap_ncselector_options_items_set, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "items", _wrap_ncselector_options_items_get, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "defidx=", _wrap_ncselector_options_defidx_set, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "defidx", _wrap_ncselector_options_defidx_get, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "maxdisplay=", _wrap_ncselector_options_maxdisplay_set, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "maxdisplay", _wrap_ncselector_options_maxdisplay_get, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "opchannels=", _wrap_ncselector_options_opchannels_set, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "opchannels", _wrap_ncselector_options_opchannels_get, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "descchannels=", _wrap_ncselector_options_descchannels_set, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "descchannels", _wrap_ncselector_options_descchannels_get, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "titlechannels=", _wrap_ncselector_options_titlechannels_set, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "titlechannels", _wrap_ncselector_options_titlechannels_get, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "footchannels=", _wrap_ncselector_options_footchannels_set, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "footchannels", _wrap_ncselector_options_footchannels_get, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "boxchannels=", _wrap_ncselector_options_boxchannels_set, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "boxchannels", _wrap_ncselector_options_boxchannels_get, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "flags=", _wrap_ncselector_options_flags_set, -1);
-  rb_define_method(SwigClassNcselector_options.klass, "flags", _wrap_ncselector_options_flags_get, -1);
-  SwigClassNcselector_options.mark = 0;
-  SwigClassNcselector_options.destroy = (void (*)(void *)) free_ncselector_options;
-  SwigClassNcselector_options.trackObjects = 0;
+  SwigClassNcselectorOptions.klass = rb_define_class_under(mNotcurses, "NcselectorOptions", rb_cObject);
+  SWIG_TypeClientData(SWIGTYPE_p_ncselector_options, (void *) &SwigClassNcselectorOptions);
+  rb_define_alloc_func(SwigClassNcselectorOptions.klass, _wrap_NcselectorOptions_allocate);
+  rb_define_method(SwigClassNcselectorOptions.klass, "initialize", _wrap_new_NcselectorOptions, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "title=", _wrap_NcselectorOptions_title_set, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "title", _wrap_NcselectorOptions_title_get, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "secondary=", _wrap_NcselectorOptions_secondary_set, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "secondary", _wrap_NcselectorOptions_secondary_get, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "footer=", _wrap_NcselectorOptions_footer_set, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "footer", _wrap_NcselectorOptions_footer_get, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "items=", _wrap_NcselectorOptions_items_set, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "items", _wrap_NcselectorOptions_items_get, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "defidx=", _wrap_NcselectorOptions_defidx_set, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "defidx", _wrap_NcselectorOptions_defidx_get, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "maxdisplay=", _wrap_NcselectorOptions_maxdisplay_set, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "maxdisplay", _wrap_NcselectorOptions_maxdisplay_get, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "opchannels=", _wrap_NcselectorOptions_opchannels_set, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "opchannels", _wrap_NcselectorOptions_opchannels_get, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "descchannels=", _wrap_NcselectorOptions_descchannels_set, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "descchannels", _wrap_NcselectorOptions_descchannels_get, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "titlechannels=", _wrap_NcselectorOptions_titlechannels_set, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "titlechannels", _wrap_NcselectorOptions_titlechannels_get, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "footchannels=", _wrap_NcselectorOptions_footchannels_set, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "footchannels", _wrap_NcselectorOptions_footchannels_get, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "boxchannels=", _wrap_NcselectorOptions_boxchannels_set, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "boxchannels", _wrap_NcselectorOptions_boxchannels_get, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "flags=", _wrap_NcselectorOptions_flags_set, -1);
+  rb_define_method(SwigClassNcselectorOptions.klass, "flags", _wrap_NcselectorOptions_flags_get, -1);
+  SwigClassNcselectorOptions.mark = 0;
+  SwigClassNcselectorOptions.destroy = (void (*)(void *)) free_ncselector_options;
+  SwigClassNcselectorOptions.trackObjects = 0;
   rb_define_module_function(mNotcurses, "ncselector_create", _wrap_ncselector_create, -1);
   rb_define_module_function(mNotcurses, "ncselector_additem", _wrap_ncselector_additem, -1);
   rb_define_module_function(mNotcurses, "ncselector_delitem", _wrap_ncselector_delitem, -1);
@@ -38300,86 +38434,86 @@ SWIGEXPORT void Init_notcurses(void) {
   rb_define_module_function(mNotcurses, "ncselector_offer_input", _wrap_ncselector_offer_input, -1);
   rb_define_module_function(mNotcurses, "ncselector_destroy", _wrap_ncselector_destroy, -1);
   
-  SwigClassNcmselector_item.klass = rb_define_class_under(mNotcurses, "Ncmselector_item", rb_cObject);
-  SWIG_TypeClientData(SWIGTYPE_p_ncmselector_item, (void *) &SwigClassNcmselector_item);
-  rb_define_alloc_func(SwigClassNcmselector_item.klass, _wrap_ncmselector_item_allocate);
-  rb_define_method(SwigClassNcmselector_item.klass, "initialize", _wrap_new_ncmselector_item, -1);
-  rb_define_method(SwigClassNcmselector_item.klass, "option=", _wrap_ncmselector_item_option_set, -1);
-  rb_define_method(SwigClassNcmselector_item.klass, "option", _wrap_ncmselector_item_option_get, -1);
-  rb_define_method(SwigClassNcmselector_item.klass, "desc=", _wrap_ncmselector_item_desc_set, -1);
-  rb_define_method(SwigClassNcmselector_item.klass, "desc", _wrap_ncmselector_item_desc_get, -1);
-  rb_define_method(SwigClassNcmselector_item.klass, "selected=", _wrap_ncmselector_item_selected_set, -1);
-  rb_define_method(SwigClassNcmselector_item.klass, "selected", _wrap_ncmselector_item_selected_get, -1);
-  SwigClassNcmselector_item.mark = 0;
-  SwigClassNcmselector_item.destroy = (void (*)(void *)) free_ncmselector_item;
-  SwigClassNcmselector_item.trackObjects = 0;
+  SwigClassNcmselectorItem.klass = rb_define_class_under(mNotcurses, "NcmselectorItem", rb_cObject);
+  SWIG_TypeClientData(SWIGTYPE_p_ncmselector_item, (void *) &SwigClassNcmselectorItem);
+  rb_define_alloc_func(SwigClassNcmselectorItem.klass, _wrap_NcmselectorItem_allocate);
+  rb_define_method(SwigClassNcmselectorItem.klass, "initialize", _wrap_new_NcmselectorItem, -1);
+  rb_define_method(SwigClassNcmselectorItem.klass, "option=", _wrap_NcmselectorItem_option_set, -1);
+  rb_define_method(SwigClassNcmselectorItem.klass, "option", _wrap_NcmselectorItem_option_get, -1);
+  rb_define_method(SwigClassNcmselectorItem.klass, "desc=", _wrap_NcmselectorItem_desc_set, -1);
+  rb_define_method(SwigClassNcmselectorItem.klass, "desc", _wrap_NcmselectorItem_desc_get, -1);
+  rb_define_method(SwigClassNcmselectorItem.klass, "selected=", _wrap_NcmselectorItem_selected_set, -1);
+  rb_define_method(SwigClassNcmselectorItem.klass, "selected", _wrap_NcmselectorItem_selected_get, -1);
+  SwigClassNcmselectorItem.mark = 0;
+  SwigClassNcmselectorItem.destroy = (void (*)(void *)) free_ncmselector_item;
+  SwigClassNcmselectorItem.trackObjects = 0;
   
-  SwigClassNcmultiselector_options.klass = rb_define_class_under(mNotcurses, "Ncmultiselector_options", rb_cObject);
-  SWIG_TypeClientData(SWIGTYPE_p_ncmultiselector_options, (void *) &SwigClassNcmultiselector_options);
-  rb_define_alloc_func(SwigClassNcmultiselector_options.klass, _wrap_ncmultiselector_options_allocate);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "initialize", _wrap_new_ncmultiselector_options, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "title=", _wrap_ncmultiselector_options_title_set, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "title", _wrap_ncmultiselector_options_title_get, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "secondary=", _wrap_ncmultiselector_options_secondary_set, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "secondary", _wrap_ncmultiselector_options_secondary_get, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "footer=", _wrap_ncmultiselector_options_footer_set, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "footer", _wrap_ncmultiselector_options_footer_get, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "items=", _wrap_ncmultiselector_options_items_set, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "items", _wrap_ncmultiselector_options_items_get, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "maxdisplay=", _wrap_ncmultiselector_options_maxdisplay_set, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "maxdisplay", _wrap_ncmultiselector_options_maxdisplay_get, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "opchannels=", _wrap_ncmultiselector_options_opchannels_set, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "opchannels", _wrap_ncmultiselector_options_opchannels_get, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "descchannels=", _wrap_ncmultiselector_options_descchannels_set, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "descchannels", _wrap_ncmultiselector_options_descchannels_get, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "titlechannels=", _wrap_ncmultiselector_options_titlechannels_set, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "titlechannels", _wrap_ncmultiselector_options_titlechannels_get, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "footchannels=", _wrap_ncmultiselector_options_footchannels_set, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "footchannels", _wrap_ncmultiselector_options_footchannels_get, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "boxchannels=", _wrap_ncmultiselector_options_boxchannels_set, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "boxchannels", _wrap_ncmultiselector_options_boxchannels_get, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "flags=", _wrap_ncmultiselector_options_flags_set, -1);
-  rb_define_method(SwigClassNcmultiselector_options.klass, "flags", _wrap_ncmultiselector_options_flags_get, -1);
-  SwigClassNcmultiselector_options.mark = 0;
-  SwigClassNcmultiselector_options.destroy = (void (*)(void *)) free_ncmultiselector_options;
-  SwigClassNcmultiselector_options.trackObjects = 0;
+  SwigClassNcmultiselectorOptions.klass = rb_define_class_under(mNotcurses, "NcmultiselectorOptions", rb_cObject);
+  SWIG_TypeClientData(SWIGTYPE_p_ncmultiselector_options, (void *) &SwigClassNcmultiselectorOptions);
+  rb_define_alloc_func(SwigClassNcmultiselectorOptions.klass, _wrap_NcmultiselectorOptions_allocate);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "initialize", _wrap_new_NcmultiselectorOptions, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "title=", _wrap_NcmultiselectorOptions_title_set, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "title", _wrap_NcmultiselectorOptions_title_get, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "secondary=", _wrap_NcmultiselectorOptions_secondary_set, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "secondary", _wrap_NcmultiselectorOptions_secondary_get, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "footer=", _wrap_NcmultiselectorOptions_footer_set, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "footer", _wrap_NcmultiselectorOptions_footer_get, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "items=", _wrap_NcmultiselectorOptions_items_set, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "items", _wrap_NcmultiselectorOptions_items_get, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "maxdisplay=", _wrap_NcmultiselectorOptions_maxdisplay_set, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "maxdisplay", _wrap_NcmultiselectorOptions_maxdisplay_get, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "opchannels=", _wrap_NcmultiselectorOptions_opchannels_set, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "opchannels", _wrap_NcmultiselectorOptions_opchannels_get, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "descchannels=", _wrap_NcmultiselectorOptions_descchannels_set, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "descchannels", _wrap_NcmultiselectorOptions_descchannels_get, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "titlechannels=", _wrap_NcmultiselectorOptions_titlechannels_set, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "titlechannels", _wrap_NcmultiselectorOptions_titlechannels_get, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "footchannels=", _wrap_NcmultiselectorOptions_footchannels_set, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "footchannels", _wrap_NcmultiselectorOptions_footchannels_get, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "boxchannels=", _wrap_NcmultiselectorOptions_boxchannels_set, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "boxchannels", _wrap_NcmultiselectorOptions_boxchannels_get, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "flags=", _wrap_NcmultiselectorOptions_flags_set, -1);
+  rb_define_method(SwigClassNcmultiselectorOptions.klass, "flags", _wrap_NcmultiselectorOptions_flags_get, -1);
+  SwigClassNcmultiselectorOptions.mark = 0;
+  SwigClassNcmultiselectorOptions.destroy = (void (*)(void *)) free_ncmultiselector_options;
+  SwigClassNcmultiselectorOptions.trackObjects = 0;
   rb_define_module_function(mNotcurses, "ncmultiselector_create", _wrap_ncmultiselector_create, -1);
   rb_define_module_function(mNotcurses, "ncmultiselector_selected", _wrap_ncmultiselector_selected, -1);
   rb_define_module_function(mNotcurses, "ncmultiselector_plane", _wrap_ncmultiselector_plane, -1);
   rb_define_module_function(mNotcurses, "ncmultiselector_offer_input", _wrap_ncmultiselector_offer_input, -1);
   rb_define_module_function(mNotcurses, "ncmultiselector_destroy", _wrap_ncmultiselector_destroy, -1);
   
-  SwigClassNctree_item.klass = rb_define_class_under(mNotcurses, "Nctree_item", rb_cObject);
-  SWIG_TypeClientData(SWIGTYPE_p_nctree_item, (void *) &SwigClassNctree_item);
-  rb_define_alloc_func(SwigClassNctree_item.klass, _wrap_nctree_item_allocate);
-  rb_define_method(SwigClassNctree_item.klass, "initialize", _wrap_new_nctree_item, -1);
-  rb_define_method(SwigClassNctree_item.klass, "curry=", _wrap_nctree_item_curry_set, -1);
-  rb_define_method(SwigClassNctree_item.klass, "curry", _wrap_nctree_item_curry_get, -1);
-  rb_define_method(SwigClassNctree_item.klass, "subs=", _wrap_nctree_item_subs_set, -1);
-  rb_define_method(SwigClassNctree_item.klass, "subs", _wrap_nctree_item_subs_get, -1);
-  rb_define_method(SwigClassNctree_item.klass, "subcount=", _wrap_nctree_item_subcount_set, -1);
-  rb_define_method(SwigClassNctree_item.klass, "subcount", _wrap_nctree_item_subcount_get, -1);
-  SwigClassNctree_item.mark = 0;
-  SwigClassNctree_item.destroy = (void (*)(void *)) free_nctree_item;
-  SwigClassNctree_item.trackObjects = 0;
+  SwigClassNctreeItem.klass = rb_define_class_under(mNotcurses, "NctreeItem", rb_cObject);
+  SWIG_TypeClientData(SWIGTYPE_p_nctree_item, (void *) &SwigClassNctreeItem);
+  rb_define_alloc_func(SwigClassNctreeItem.klass, _wrap_NctreeItem_allocate);
+  rb_define_method(SwigClassNctreeItem.klass, "initialize", _wrap_new_NctreeItem, -1);
+  rb_define_method(SwigClassNctreeItem.klass, "curry=", _wrap_NctreeItem_curry_set, -1);
+  rb_define_method(SwigClassNctreeItem.klass, "curry", _wrap_NctreeItem_curry_get, -1);
+  rb_define_method(SwigClassNctreeItem.klass, "subs=", _wrap_NctreeItem_subs_set, -1);
+  rb_define_method(SwigClassNctreeItem.klass, "subs", _wrap_NctreeItem_subs_get, -1);
+  rb_define_method(SwigClassNctreeItem.klass, "subcount=", _wrap_NctreeItem_subcount_set, -1);
+  rb_define_method(SwigClassNctreeItem.klass, "subcount", _wrap_NctreeItem_subcount_get, -1);
+  SwigClassNctreeItem.mark = 0;
+  SwigClassNctreeItem.destroy = (void (*)(void *)) free_nctree_item;
+  SwigClassNctreeItem.trackObjects = 0;
   
-  SwigClassNctree_options.klass = rb_define_class_under(mNotcurses, "Nctree_options", rb_cObject);
-  SWIG_TypeClientData(SWIGTYPE_p_nctree_options, (void *) &SwigClassNctree_options);
-  rb_define_alloc_func(SwigClassNctree_options.klass, _wrap_nctree_options_allocate);
-  rb_define_method(SwigClassNctree_options.klass, "initialize", _wrap_new_nctree_options, -1);
-  rb_define_method(SwigClassNctree_options.klass, "items=", _wrap_nctree_options_items_set, -1);
-  rb_define_method(SwigClassNctree_options.klass, "items", _wrap_nctree_options_items_get, -1);
-  rb_define_method(SwigClassNctree_options.klass, "count=", _wrap_nctree_options_count_set, -1);
-  rb_define_method(SwigClassNctree_options.klass, "count", _wrap_nctree_options_count_get, -1);
-  rb_define_method(SwigClassNctree_options.klass, "nctreecb=", _wrap_nctree_options_nctreecb_set, -1);
-  rb_define_method(SwigClassNctree_options.klass, "nctreecb", _wrap_nctree_options_nctreecb_get, -1);
-  rb_define_method(SwigClassNctree_options.klass, "indentcols=", _wrap_nctree_options_indentcols_set, -1);
-  rb_define_method(SwigClassNctree_options.klass, "indentcols", _wrap_nctree_options_indentcols_get, -1);
-  rb_define_method(SwigClassNctree_options.klass, "flags=", _wrap_nctree_options_flags_set, -1);
-  rb_define_method(SwigClassNctree_options.klass, "flags", _wrap_nctree_options_flags_get, -1);
-  SwigClassNctree_options.mark = 0;
-  SwigClassNctree_options.destroy = (void (*)(void *)) free_nctree_options;
-  SwigClassNctree_options.trackObjects = 0;
+  SwigClassNctreeOptions.klass = rb_define_class_under(mNotcurses, "NctreeOptions", rb_cObject);
+  SWIG_TypeClientData(SWIGTYPE_p_nctree_options, (void *) &SwigClassNctreeOptions);
+  rb_define_alloc_func(SwigClassNctreeOptions.klass, _wrap_NctreeOptions_allocate);
+  rb_define_method(SwigClassNctreeOptions.klass, "initialize", _wrap_new_NctreeOptions, -1);
+  rb_define_method(SwigClassNctreeOptions.klass, "items=", _wrap_NctreeOptions_items_set, -1);
+  rb_define_method(SwigClassNctreeOptions.klass, "items", _wrap_NctreeOptions_items_get, -1);
+  rb_define_method(SwigClassNctreeOptions.klass, "count=", _wrap_NctreeOptions_count_set, -1);
+  rb_define_method(SwigClassNctreeOptions.klass, "count", _wrap_NctreeOptions_count_get, -1);
+  rb_define_method(SwigClassNctreeOptions.klass, "nctreecb=", _wrap_NctreeOptions_nctreecb_set, -1);
+  rb_define_method(SwigClassNctreeOptions.klass, "nctreecb", _wrap_NctreeOptions_nctreecb_get, -1);
+  rb_define_method(SwigClassNctreeOptions.klass, "indentcols=", _wrap_NctreeOptions_indentcols_set, -1);
+  rb_define_method(SwigClassNctreeOptions.klass, "indentcols", _wrap_NctreeOptions_indentcols_get, -1);
+  rb_define_method(SwigClassNctreeOptions.klass, "flags=", _wrap_NctreeOptions_flags_set, -1);
+  rb_define_method(SwigClassNctreeOptions.klass, "flags", _wrap_NctreeOptions_flags_get, -1);
+  SwigClassNctreeOptions.mark = 0;
+  SwigClassNctreeOptions.destroy = (void (*)(void *)) free_nctree_options;
+  SwigClassNctreeOptions.trackObjects = 0;
   rb_define_module_function(mNotcurses, "nctree_create", _wrap_nctree_create, -1);
   rb_define_module_function(mNotcurses, "nctree_plane", _wrap_nctree_plane, -1);
   rb_define_module_function(mNotcurses, "nctree_redraw", _wrap_nctree_redraw, -1);
@@ -38392,53 +38526,53 @@ SWIGEXPORT void Init_notcurses(void) {
   rb_define_module_function(mNotcurses, "nctree_del", _wrap_nctree_del, -1);
   rb_define_module_function(mNotcurses, "nctree_destroy", _wrap_nctree_destroy, -1);
   
-  SwigClassNcmenu_item.klass = rb_define_class_under(mNotcurses, "Ncmenu_item", rb_cObject);
-  SWIG_TypeClientData(SWIGTYPE_p_ncmenu_item, (void *) &SwigClassNcmenu_item);
-  rb_define_alloc_func(SwigClassNcmenu_item.klass, _wrap_ncmenu_item_allocate);
-  rb_define_method(SwigClassNcmenu_item.klass, "initialize", _wrap_new_ncmenu_item, -1);
-  rb_define_method(SwigClassNcmenu_item.klass, "desc=", _wrap_ncmenu_item_desc_set, -1);
-  rb_define_method(SwigClassNcmenu_item.klass, "desc", _wrap_ncmenu_item_desc_get, -1);
-  rb_define_method(SwigClassNcmenu_item.klass, "shortcut=", _wrap_ncmenu_item_shortcut_set, -1);
-  rb_define_method(SwigClassNcmenu_item.klass, "shortcut", _wrap_ncmenu_item_shortcut_get, -1);
-  SwigClassNcmenu_item.mark = 0;
-  SwigClassNcmenu_item.destroy = (void (*)(void *)) free_ncmenu_item;
-  SwigClassNcmenu_item.trackObjects = 0;
+  SwigClassNcmenuItem.klass = rb_define_class_under(mNotcurses, "NcmenuItem", rb_cObject);
+  SWIG_TypeClientData(SWIGTYPE_p_ncmenu_item, (void *) &SwigClassNcmenuItem);
+  rb_define_alloc_func(SwigClassNcmenuItem.klass, _wrap_NcmenuItem_allocate);
+  rb_define_method(SwigClassNcmenuItem.klass, "initialize", _wrap_new_NcmenuItem, -1);
+  rb_define_method(SwigClassNcmenuItem.klass, "desc=", _wrap_NcmenuItem_desc_set, -1);
+  rb_define_method(SwigClassNcmenuItem.klass, "desc", _wrap_NcmenuItem_desc_get, -1);
+  rb_define_method(SwigClassNcmenuItem.klass, "shortcut=", _wrap_NcmenuItem_shortcut_set, -1);
+  rb_define_method(SwigClassNcmenuItem.klass, "shortcut", _wrap_NcmenuItem_shortcut_get, -1);
+  SwigClassNcmenuItem.mark = 0;
+  SwigClassNcmenuItem.destroy = (void (*)(void *)) free_ncmenu_item;
+  SwigClassNcmenuItem.trackObjects = 0;
   
-  SwigClassNcmenu_section.klass = rb_define_class_under(mNotcurses, "Ncmenu_section", rb_cObject);
-  SWIG_TypeClientData(SWIGTYPE_p_ncmenu_section, (void *) &SwigClassNcmenu_section);
-  rb_define_alloc_func(SwigClassNcmenu_section.klass, _wrap_ncmenu_section_allocate);
-  rb_define_method(SwigClassNcmenu_section.klass, "initialize", _wrap_new_ncmenu_section, -1);
-  rb_define_method(SwigClassNcmenu_section.klass, "name=", _wrap_ncmenu_section_name_set, -1);
-  rb_define_method(SwigClassNcmenu_section.klass, "name", _wrap_ncmenu_section_name_get, -1);
-  rb_define_method(SwigClassNcmenu_section.klass, "itemcount=", _wrap_ncmenu_section_itemcount_set, -1);
-  rb_define_method(SwigClassNcmenu_section.klass, "itemcount", _wrap_ncmenu_section_itemcount_get, -1);
-  rb_define_method(SwigClassNcmenu_section.klass, "items=", _wrap_ncmenu_section_items_set, -1);
-  rb_define_method(SwigClassNcmenu_section.klass, "items", _wrap_ncmenu_section_items_get, -1);
-  rb_define_method(SwigClassNcmenu_section.klass, "shortcut=", _wrap_ncmenu_section_shortcut_set, -1);
-  rb_define_method(SwigClassNcmenu_section.klass, "shortcut", _wrap_ncmenu_section_shortcut_get, -1);
-  SwigClassNcmenu_section.mark = 0;
-  SwigClassNcmenu_section.destroy = (void (*)(void *)) free_ncmenu_section;
-  SwigClassNcmenu_section.trackObjects = 0;
+  SwigClassNcmenuSection.klass = rb_define_class_under(mNotcurses, "NcmenuSection", rb_cObject);
+  SWIG_TypeClientData(SWIGTYPE_p_ncmenu_section, (void *) &SwigClassNcmenuSection);
+  rb_define_alloc_func(SwigClassNcmenuSection.klass, _wrap_NcmenuSection_allocate);
+  rb_define_method(SwigClassNcmenuSection.klass, "initialize", _wrap_new_NcmenuSection, -1);
+  rb_define_method(SwigClassNcmenuSection.klass, "name=", _wrap_NcmenuSection_name_set, -1);
+  rb_define_method(SwigClassNcmenuSection.klass, "name", _wrap_NcmenuSection_name_get, -1);
+  rb_define_method(SwigClassNcmenuSection.klass, "itemcount=", _wrap_NcmenuSection_itemcount_set, -1);
+  rb_define_method(SwigClassNcmenuSection.klass, "itemcount", _wrap_NcmenuSection_itemcount_get, -1);
+  rb_define_method(SwigClassNcmenuSection.klass, "items=", _wrap_NcmenuSection_items_set, -1);
+  rb_define_method(SwigClassNcmenuSection.klass, "items", _wrap_NcmenuSection_items_get, -1);
+  rb_define_method(SwigClassNcmenuSection.klass, "shortcut=", _wrap_NcmenuSection_shortcut_set, -1);
+  rb_define_method(SwigClassNcmenuSection.klass, "shortcut", _wrap_NcmenuSection_shortcut_get, -1);
+  SwigClassNcmenuSection.mark = 0;
+  SwigClassNcmenuSection.destroy = (void (*)(void *)) free_ncmenu_section;
+  SwigClassNcmenuSection.trackObjects = 0;
   rb_define_const(mNotcurses, "NCMENU_OPTION_BOTTOM", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0001ull)));
   rb_define_const(mNotcurses, "NCMENU_OPTION_HIDING", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0002ull)));
   
-  SwigClassNcmenu_options.klass = rb_define_class_under(mNotcurses, "Ncmenu_options", rb_cObject);
-  SWIG_TypeClientData(SWIGTYPE_p_ncmenu_options, (void *) &SwigClassNcmenu_options);
-  rb_define_alloc_func(SwigClassNcmenu_options.klass, _wrap_ncmenu_options_allocate);
-  rb_define_method(SwigClassNcmenu_options.klass, "initialize", _wrap_new_ncmenu_options, -1);
-  rb_define_method(SwigClassNcmenu_options.klass, "sections=", _wrap_ncmenu_options_sections_set, -1);
-  rb_define_method(SwigClassNcmenu_options.klass, "sections", _wrap_ncmenu_options_sections_get, -1);
-  rb_define_method(SwigClassNcmenu_options.klass, "sectioncount=", _wrap_ncmenu_options_sectioncount_set, -1);
-  rb_define_method(SwigClassNcmenu_options.klass, "sectioncount", _wrap_ncmenu_options_sectioncount_get, -1);
-  rb_define_method(SwigClassNcmenu_options.klass, "headerchannels=", _wrap_ncmenu_options_headerchannels_set, -1);
-  rb_define_method(SwigClassNcmenu_options.klass, "headerchannels", _wrap_ncmenu_options_headerchannels_get, -1);
-  rb_define_method(SwigClassNcmenu_options.klass, "sectionchannels=", _wrap_ncmenu_options_sectionchannels_set, -1);
-  rb_define_method(SwigClassNcmenu_options.klass, "sectionchannels", _wrap_ncmenu_options_sectionchannels_get, -1);
-  rb_define_method(SwigClassNcmenu_options.klass, "flags=", _wrap_ncmenu_options_flags_set, -1);
-  rb_define_method(SwigClassNcmenu_options.klass, "flags", _wrap_ncmenu_options_flags_get, -1);
-  SwigClassNcmenu_options.mark = 0;
-  SwigClassNcmenu_options.destroy = (void (*)(void *)) free_ncmenu_options;
-  SwigClassNcmenu_options.trackObjects = 0;
+  SwigClassNcmenuOptions.klass = rb_define_class_under(mNotcurses, "NcmenuOptions", rb_cObject);
+  SWIG_TypeClientData(SWIGTYPE_p_ncmenu_options, (void *) &SwigClassNcmenuOptions);
+  rb_define_alloc_func(SwigClassNcmenuOptions.klass, _wrap_NcmenuOptions_allocate);
+  rb_define_method(SwigClassNcmenuOptions.klass, "initialize", _wrap_new_NcmenuOptions, -1);
+  rb_define_method(SwigClassNcmenuOptions.klass, "sections=", _wrap_NcmenuOptions_sections_set, -1);
+  rb_define_method(SwigClassNcmenuOptions.klass, "sections", _wrap_NcmenuOptions_sections_get, -1);
+  rb_define_method(SwigClassNcmenuOptions.klass, "sectioncount=", _wrap_NcmenuOptions_sectioncount_set, -1);
+  rb_define_method(SwigClassNcmenuOptions.klass, "sectioncount", _wrap_NcmenuOptions_sectioncount_get, -1);
+  rb_define_method(SwigClassNcmenuOptions.klass, "headerchannels=", _wrap_NcmenuOptions_headerchannels_set, -1);
+  rb_define_method(SwigClassNcmenuOptions.klass, "headerchannels", _wrap_NcmenuOptions_headerchannels_get, -1);
+  rb_define_method(SwigClassNcmenuOptions.klass, "sectionchannels=", _wrap_NcmenuOptions_sectionchannels_set, -1);
+  rb_define_method(SwigClassNcmenuOptions.klass, "sectionchannels", _wrap_NcmenuOptions_sectionchannels_get, -1);
+  rb_define_method(SwigClassNcmenuOptions.klass, "flags=", _wrap_NcmenuOptions_flags_set, -1);
+  rb_define_method(SwigClassNcmenuOptions.klass, "flags", _wrap_NcmenuOptions_flags_get, -1);
+  SwigClassNcmenuOptions.mark = 0;
+  SwigClassNcmenuOptions.destroy = (void (*)(void *)) free_ncmenu_options;
+  SwigClassNcmenuOptions.trackObjects = 0;
   rb_define_module_function(mNotcurses, "ncmenu_create", _wrap_ncmenu_create, -1);
   rb_define_module_function(mNotcurses, "ncmenu_unroll", _wrap_ncmenu_unroll, -1);
   rb_define_module_function(mNotcurses, "ncmenu_rollup", _wrap_ncmenu_rollup, -1);
@@ -38454,23 +38588,23 @@ SWIGEXPORT void Init_notcurses(void) {
   rb_define_module_function(mNotcurses, "ncmenu_destroy", _wrap_ncmenu_destroy, -1);
   rb_define_const(mNotcurses, "NCPROGBAR_OPTION_RETROGRADE", SWIG_From_unsigned_SS_int((unsigned int)(0x0001u)));
   
-  SwigClassNcprogbar_options.klass = rb_define_class_under(mNotcurses, "Ncprogbar_options", rb_cObject);
-  SWIG_TypeClientData(SWIGTYPE_p_ncprogbar_options, (void *) &SwigClassNcprogbar_options);
-  rb_define_alloc_func(SwigClassNcprogbar_options.klass, _wrap_ncprogbar_options_allocate);
-  rb_define_method(SwigClassNcprogbar_options.klass, "initialize", _wrap_new_ncprogbar_options, -1);
-  rb_define_method(SwigClassNcprogbar_options.klass, "ulchannel=", _wrap_ncprogbar_options_ulchannel_set, -1);
-  rb_define_method(SwigClassNcprogbar_options.klass, "ulchannel", _wrap_ncprogbar_options_ulchannel_get, -1);
-  rb_define_method(SwigClassNcprogbar_options.klass, "urchannel=", _wrap_ncprogbar_options_urchannel_set, -1);
-  rb_define_method(SwigClassNcprogbar_options.klass, "urchannel", _wrap_ncprogbar_options_urchannel_get, -1);
-  rb_define_method(SwigClassNcprogbar_options.klass, "blchannel=", _wrap_ncprogbar_options_blchannel_set, -1);
-  rb_define_method(SwigClassNcprogbar_options.klass, "blchannel", _wrap_ncprogbar_options_blchannel_get, -1);
-  rb_define_method(SwigClassNcprogbar_options.klass, "brchannel=", _wrap_ncprogbar_options_brchannel_set, -1);
-  rb_define_method(SwigClassNcprogbar_options.klass, "brchannel", _wrap_ncprogbar_options_brchannel_get, -1);
-  rb_define_method(SwigClassNcprogbar_options.klass, "flags=", _wrap_ncprogbar_options_flags_set, -1);
-  rb_define_method(SwigClassNcprogbar_options.klass, "flags", _wrap_ncprogbar_options_flags_get, -1);
-  SwigClassNcprogbar_options.mark = 0;
-  SwigClassNcprogbar_options.destroy = (void (*)(void *)) free_ncprogbar_options;
-  SwigClassNcprogbar_options.trackObjects = 0;
+  SwigClassNcprogbarOptions.klass = rb_define_class_under(mNotcurses, "NcprogbarOptions", rb_cObject);
+  SWIG_TypeClientData(SWIGTYPE_p_ncprogbar_options, (void *) &SwigClassNcprogbarOptions);
+  rb_define_alloc_func(SwigClassNcprogbarOptions.klass, _wrap_NcprogbarOptions_allocate);
+  rb_define_method(SwigClassNcprogbarOptions.klass, "initialize", _wrap_new_NcprogbarOptions, -1);
+  rb_define_method(SwigClassNcprogbarOptions.klass, "ulchannel=", _wrap_NcprogbarOptions_ulchannel_set, -1);
+  rb_define_method(SwigClassNcprogbarOptions.klass, "ulchannel", _wrap_NcprogbarOptions_ulchannel_get, -1);
+  rb_define_method(SwigClassNcprogbarOptions.klass, "urchannel=", _wrap_NcprogbarOptions_urchannel_set, -1);
+  rb_define_method(SwigClassNcprogbarOptions.klass, "urchannel", _wrap_NcprogbarOptions_urchannel_get, -1);
+  rb_define_method(SwigClassNcprogbarOptions.klass, "blchannel=", _wrap_NcprogbarOptions_blchannel_set, -1);
+  rb_define_method(SwigClassNcprogbarOptions.klass, "blchannel", _wrap_NcprogbarOptions_blchannel_get, -1);
+  rb_define_method(SwigClassNcprogbarOptions.klass, "brchannel=", _wrap_NcprogbarOptions_brchannel_set, -1);
+  rb_define_method(SwigClassNcprogbarOptions.klass, "brchannel", _wrap_NcprogbarOptions_brchannel_get, -1);
+  rb_define_method(SwigClassNcprogbarOptions.klass, "flags=", _wrap_NcprogbarOptions_flags_set, -1);
+  rb_define_method(SwigClassNcprogbarOptions.klass, "flags", _wrap_NcprogbarOptions_flags_get, -1);
+  SwigClassNcprogbarOptions.mark = 0;
+  SwigClassNcprogbarOptions.destroy = (void (*)(void *)) free_ncprogbar_options;
+  SwigClassNcprogbarOptions.trackObjects = 0;
   rb_define_module_function(mNotcurses, "ncprogbar_create", _wrap_ncprogbar_create, -1);
   rb_define_module_function(mNotcurses, "ncprogbar_plane", _wrap_ncprogbar_plane, -1);
   rb_define_module_function(mNotcurses, "ncprogbar_set_progress", _wrap_ncprogbar_set_progress, -1);
@@ -38478,23 +38612,23 @@ SWIGEXPORT void Init_notcurses(void) {
   rb_define_module_function(mNotcurses, "ncprogbar_destroy", _wrap_ncprogbar_destroy, -1);
   rb_define_const(mNotcurses, "NCTABBED_OPTION_BOTTOM", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0001ull)));
   
-  SwigClassNctabbed_options.klass = rb_define_class_under(mNotcurses, "Nctabbed_options", rb_cObject);
-  SWIG_TypeClientData(SWIGTYPE_p_nctabbed_options, (void *) &SwigClassNctabbed_options);
-  rb_define_alloc_func(SwigClassNctabbed_options.klass, _wrap_nctabbed_options_allocate);
-  rb_define_method(SwigClassNctabbed_options.klass, "initialize", _wrap_new_nctabbed_options, -1);
-  rb_define_method(SwigClassNctabbed_options.klass, "selchan=", _wrap_nctabbed_options_selchan_set, -1);
-  rb_define_method(SwigClassNctabbed_options.klass, "selchan", _wrap_nctabbed_options_selchan_get, -1);
-  rb_define_method(SwigClassNctabbed_options.klass, "hdrchan=", _wrap_nctabbed_options_hdrchan_set, -1);
-  rb_define_method(SwigClassNctabbed_options.klass, "hdrchan", _wrap_nctabbed_options_hdrchan_get, -1);
-  rb_define_method(SwigClassNctabbed_options.klass, "sepchan=", _wrap_nctabbed_options_sepchan_set, -1);
-  rb_define_method(SwigClassNctabbed_options.klass, "sepchan", _wrap_nctabbed_options_sepchan_get, -1);
-  rb_define_method(SwigClassNctabbed_options.klass, "separator=", _wrap_nctabbed_options_separator_set, -1);
-  rb_define_method(SwigClassNctabbed_options.klass, "separator", _wrap_nctabbed_options_separator_get, -1);
-  rb_define_method(SwigClassNctabbed_options.klass, "flags=", _wrap_nctabbed_options_flags_set, -1);
-  rb_define_method(SwigClassNctabbed_options.klass, "flags", _wrap_nctabbed_options_flags_get, -1);
-  SwigClassNctabbed_options.mark = 0;
-  SwigClassNctabbed_options.destroy = (void (*)(void *)) free_nctabbed_options;
-  SwigClassNctabbed_options.trackObjects = 0;
+  SwigClassNctabbedOptions.klass = rb_define_class_under(mNotcurses, "NctabbedOptions", rb_cObject);
+  SWIG_TypeClientData(SWIGTYPE_p_nctabbed_options, (void *) &SwigClassNctabbedOptions);
+  rb_define_alloc_func(SwigClassNctabbedOptions.klass, _wrap_NctabbedOptions_allocate);
+  rb_define_method(SwigClassNctabbedOptions.klass, "initialize", _wrap_new_NctabbedOptions, -1);
+  rb_define_method(SwigClassNctabbedOptions.klass, "selchan=", _wrap_NctabbedOptions_selchan_set, -1);
+  rb_define_method(SwigClassNctabbedOptions.klass, "selchan", _wrap_NctabbedOptions_selchan_get, -1);
+  rb_define_method(SwigClassNctabbedOptions.klass, "hdrchan=", _wrap_NctabbedOptions_hdrchan_set, -1);
+  rb_define_method(SwigClassNctabbedOptions.klass, "hdrchan", _wrap_NctabbedOptions_hdrchan_get, -1);
+  rb_define_method(SwigClassNctabbedOptions.klass, "sepchan=", _wrap_NctabbedOptions_sepchan_set, -1);
+  rb_define_method(SwigClassNctabbedOptions.klass, "sepchan", _wrap_NctabbedOptions_sepchan_get, -1);
+  rb_define_method(SwigClassNctabbedOptions.klass, "separator=", _wrap_NctabbedOptions_separator_set, -1);
+  rb_define_method(SwigClassNctabbedOptions.klass, "separator", _wrap_NctabbedOptions_separator_get, -1);
+  rb_define_method(SwigClassNctabbedOptions.klass, "flags=", _wrap_NctabbedOptions_flags_set, -1);
+  rb_define_method(SwigClassNctabbedOptions.klass, "flags", _wrap_NctabbedOptions_flags_get, -1);
+  SwigClassNctabbedOptions.mark = 0;
+  SwigClassNctabbedOptions.destroy = (void (*)(void *)) free_nctabbed_options;
+  SwigClassNctabbedOptions.trackObjects = 0;
   rb_define_module_function(mNotcurses, "nctabbed_create", _wrap_nctabbed_create, -1);
   rb_define_module_function(mNotcurses, "nctabbed_destroy", _wrap_nctabbed_destroy, -1);
   rb_define_module_function(mNotcurses, "nctabbed_redraw", _wrap_nctabbed_redraw, -1);
@@ -38539,27 +38673,27 @@ SWIGEXPORT void Init_notcurses(void) {
   rb_define_const(mNotcurses, "NCPLOT_OPTION_DETECTMAXONLY", SWIG_From_unsigned_SS_int((unsigned int)(0x0010u)));
   rb_define_const(mNotcurses, "NCPLOT_OPTION_PRINTSAMPLE", SWIG_From_unsigned_SS_int((unsigned int)(0x0020u)));
   
-  SwigClassNcplot_options.klass = rb_define_class_under(mNotcurses, "Ncplot_options", rb_cObject);
-  SWIG_TypeClientData(SWIGTYPE_p_ncplot_options, (void *) &SwigClassNcplot_options);
-  rb_define_alloc_func(SwigClassNcplot_options.klass, _wrap_ncplot_options_allocate);
-  rb_define_method(SwigClassNcplot_options.klass, "initialize", _wrap_new_ncplot_options, -1);
-  rb_define_method(SwigClassNcplot_options.klass, "maxchannels=", _wrap_ncplot_options_maxchannels_set, -1);
-  rb_define_method(SwigClassNcplot_options.klass, "maxchannels", _wrap_ncplot_options_maxchannels_get, -1);
-  rb_define_method(SwigClassNcplot_options.klass, "minchannels=", _wrap_ncplot_options_minchannels_set, -1);
-  rb_define_method(SwigClassNcplot_options.klass, "minchannels", _wrap_ncplot_options_minchannels_get, -1);
-  rb_define_method(SwigClassNcplot_options.klass, "legendstyle=", _wrap_ncplot_options_legendstyle_set, -1);
-  rb_define_method(SwigClassNcplot_options.klass, "legendstyle", _wrap_ncplot_options_legendstyle_get, -1);
-  rb_define_method(SwigClassNcplot_options.klass, "gridtype=", _wrap_ncplot_options_gridtype_set, -1);
-  rb_define_method(SwigClassNcplot_options.klass, "gridtype", _wrap_ncplot_options_gridtype_get, -1);
-  rb_define_method(SwigClassNcplot_options.klass, "rangex=", _wrap_ncplot_options_rangex_set, -1);
-  rb_define_method(SwigClassNcplot_options.klass, "rangex", _wrap_ncplot_options_rangex_get, -1);
-  rb_define_method(SwigClassNcplot_options.klass, "title=", _wrap_ncplot_options_title_set, -1);
-  rb_define_method(SwigClassNcplot_options.klass, "title", _wrap_ncplot_options_title_get, -1);
-  rb_define_method(SwigClassNcplot_options.klass, "flags=", _wrap_ncplot_options_flags_set, -1);
-  rb_define_method(SwigClassNcplot_options.klass, "flags", _wrap_ncplot_options_flags_get, -1);
-  SwigClassNcplot_options.mark = 0;
-  SwigClassNcplot_options.destroy = (void (*)(void *)) free_ncplot_options;
-  SwigClassNcplot_options.trackObjects = 0;
+  SwigClassNcplotOptions.klass = rb_define_class_under(mNotcurses, "NcplotOptions", rb_cObject);
+  SWIG_TypeClientData(SWIGTYPE_p_ncplot_options, (void *) &SwigClassNcplotOptions);
+  rb_define_alloc_func(SwigClassNcplotOptions.klass, _wrap_NcplotOptions_allocate);
+  rb_define_method(SwigClassNcplotOptions.klass, "initialize", _wrap_new_NcplotOptions, -1);
+  rb_define_method(SwigClassNcplotOptions.klass, "maxchannels=", _wrap_NcplotOptions_maxchannels_set, -1);
+  rb_define_method(SwigClassNcplotOptions.klass, "maxchannels", _wrap_NcplotOptions_maxchannels_get, -1);
+  rb_define_method(SwigClassNcplotOptions.klass, "minchannels=", _wrap_NcplotOptions_minchannels_set, -1);
+  rb_define_method(SwigClassNcplotOptions.klass, "minchannels", _wrap_NcplotOptions_minchannels_get, -1);
+  rb_define_method(SwigClassNcplotOptions.klass, "legendstyle=", _wrap_NcplotOptions_legendstyle_set, -1);
+  rb_define_method(SwigClassNcplotOptions.klass, "legendstyle", _wrap_NcplotOptions_legendstyle_get, -1);
+  rb_define_method(SwigClassNcplotOptions.klass, "gridtype=", _wrap_NcplotOptions_gridtype_set, -1);
+  rb_define_method(SwigClassNcplotOptions.klass, "gridtype", _wrap_NcplotOptions_gridtype_get, -1);
+  rb_define_method(SwigClassNcplotOptions.klass, "rangex=", _wrap_NcplotOptions_rangex_set, -1);
+  rb_define_method(SwigClassNcplotOptions.klass, "rangex", _wrap_NcplotOptions_rangex_get, -1);
+  rb_define_method(SwigClassNcplotOptions.klass, "title=", _wrap_NcplotOptions_title_set, -1);
+  rb_define_method(SwigClassNcplotOptions.klass, "title", _wrap_NcplotOptions_title_get, -1);
+  rb_define_method(SwigClassNcplotOptions.klass, "flags=", _wrap_NcplotOptions_flags_set, -1);
+  rb_define_method(SwigClassNcplotOptions.klass, "flags", _wrap_NcplotOptions_flags_get, -1);
+  SwigClassNcplotOptions.mark = 0;
+  SwigClassNcplotOptions.destroy = (void (*)(void *)) free_ncplot_options;
+  SwigClassNcplotOptions.trackObjects = 0;
   rb_define_module_function(mNotcurses, "ncuplot_create", _wrap_ncuplot_create, -1);
   rb_define_module_function(mNotcurses, "ncdplot_create", _wrap_ncdplot_create, -1);
   rb_define_module_function(mNotcurses, "ncuplot_plane", _wrap_ncuplot_plane, -1);
@@ -38573,36 +38707,36 @@ SWIGEXPORT void Init_notcurses(void) {
   rb_define_module_function(mNotcurses, "ncuplot_destroy", _wrap_ncuplot_destroy, -1);
   rb_define_module_function(mNotcurses, "ncdplot_destroy", _wrap_ncdplot_destroy, -1);
   
-  SwigClassNcfdplane_options.klass = rb_define_class_under(mNotcurses, "Ncfdplane_options", rb_cObject);
-  SWIG_TypeClientData(SWIGTYPE_p_ncfdplane_options, (void *) &SwigClassNcfdplane_options);
-  rb_define_alloc_func(SwigClassNcfdplane_options.klass, _wrap_ncfdplane_options_allocate);
-  rb_define_method(SwigClassNcfdplane_options.klass, "initialize", _wrap_new_ncfdplane_options, -1);
-  rb_define_method(SwigClassNcfdplane_options.klass, "curry=", _wrap_ncfdplane_options_curry_set, -1);
-  rb_define_method(SwigClassNcfdplane_options.klass, "curry", _wrap_ncfdplane_options_curry_get, -1);
-  rb_define_method(SwigClassNcfdplane_options.klass, "follow=", _wrap_ncfdplane_options_follow_set, -1);
-  rb_define_method(SwigClassNcfdplane_options.klass, "follow", _wrap_ncfdplane_options_follow_get, -1);
-  rb_define_method(SwigClassNcfdplane_options.klass, "flags=", _wrap_ncfdplane_options_flags_set, -1);
-  rb_define_method(SwigClassNcfdplane_options.klass, "flags", _wrap_ncfdplane_options_flags_get, -1);
-  SwigClassNcfdplane_options.mark = 0;
-  SwigClassNcfdplane_options.destroy = (void (*)(void *)) free_ncfdplane_options;
-  SwigClassNcfdplane_options.trackObjects = 0;
+  SwigClassNcfdplaneOptions.klass = rb_define_class_under(mNotcurses, "NcfdplaneOptions", rb_cObject);
+  SWIG_TypeClientData(SWIGTYPE_p_ncfdplane_options, (void *) &SwigClassNcfdplaneOptions);
+  rb_define_alloc_func(SwigClassNcfdplaneOptions.klass, _wrap_NcfdplaneOptions_allocate);
+  rb_define_method(SwigClassNcfdplaneOptions.klass, "initialize", _wrap_new_NcfdplaneOptions, -1);
+  rb_define_method(SwigClassNcfdplaneOptions.klass, "curry=", _wrap_NcfdplaneOptions_curry_set, -1);
+  rb_define_method(SwigClassNcfdplaneOptions.klass, "curry", _wrap_NcfdplaneOptions_curry_get, -1);
+  rb_define_method(SwigClassNcfdplaneOptions.klass, "follow=", _wrap_NcfdplaneOptions_follow_set, -1);
+  rb_define_method(SwigClassNcfdplaneOptions.klass, "follow", _wrap_NcfdplaneOptions_follow_get, -1);
+  rb_define_method(SwigClassNcfdplaneOptions.klass, "flags=", _wrap_NcfdplaneOptions_flags_set, -1);
+  rb_define_method(SwigClassNcfdplaneOptions.klass, "flags", _wrap_NcfdplaneOptions_flags_get, -1);
+  SwigClassNcfdplaneOptions.mark = 0;
+  SwigClassNcfdplaneOptions.destroy = (void (*)(void *)) free_ncfdplane_options;
+  SwigClassNcfdplaneOptions.trackObjects = 0;
   rb_define_module_function(mNotcurses, "ncfdplane_create", _wrap_ncfdplane_create, -1);
   rb_define_module_function(mNotcurses, "ncfdplane_plane", _wrap_ncfdplane_plane, -1);
   rb_define_module_function(mNotcurses, "ncfdplane_destroy", _wrap_ncfdplane_destroy, -1);
   
-  SwigClassNcsubproc_options.klass = rb_define_class_under(mNotcurses, "Ncsubproc_options", rb_cObject);
-  SWIG_TypeClientData(SWIGTYPE_p_ncsubproc_options, (void *) &SwigClassNcsubproc_options);
-  rb_define_alloc_func(SwigClassNcsubproc_options.klass, _wrap_ncsubproc_options_allocate);
-  rb_define_method(SwigClassNcsubproc_options.klass, "initialize", _wrap_new_ncsubproc_options, -1);
-  rb_define_method(SwigClassNcsubproc_options.klass, "curry=", _wrap_ncsubproc_options_curry_set, -1);
-  rb_define_method(SwigClassNcsubproc_options.klass, "curry", _wrap_ncsubproc_options_curry_get, -1);
-  rb_define_method(SwigClassNcsubproc_options.klass, "restart_period=", _wrap_ncsubproc_options_restart_period_set, -1);
-  rb_define_method(SwigClassNcsubproc_options.klass, "restart_period", _wrap_ncsubproc_options_restart_period_get, -1);
-  rb_define_method(SwigClassNcsubproc_options.klass, "flags=", _wrap_ncsubproc_options_flags_set, -1);
-  rb_define_method(SwigClassNcsubproc_options.klass, "flags", _wrap_ncsubproc_options_flags_get, -1);
-  SwigClassNcsubproc_options.mark = 0;
-  SwigClassNcsubproc_options.destroy = (void (*)(void *)) free_ncsubproc_options;
-  SwigClassNcsubproc_options.trackObjects = 0;
+  SwigClassNcsubprocOptions.klass = rb_define_class_under(mNotcurses, "NcsubprocOptions", rb_cObject);
+  SWIG_TypeClientData(SWIGTYPE_p_ncsubproc_options, (void *) &SwigClassNcsubprocOptions);
+  rb_define_alloc_func(SwigClassNcsubprocOptions.klass, _wrap_NcsubprocOptions_allocate);
+  rb_define_method(SwigClassNcsubprocOptions.klass, "initialize", _wrap_new_NcsubprocOptions, -1);
+  rb_define_method(SwigClassNcsubprocOptions.klass, "curry=", _wrap_NcsubprocOptions_curry_set, -1);
+  rb_define_method(SwigClassNcsubprocOptions.klass, "curry", _wrap_NcsubprocOptions_curry_get, -1);
+  rb_define_method(SwigClassNcsubprocOptions.klass, "restart_period=", _wrap_NcsubprocOptions_restart_period_set, -1);
+  rb_define_method(SwigClassNcsubprocOptions.klass, "restart_period", _wrap_NcsubprocOptions_restart_period_get, -1);
+  rb_define_method(SwigClassNcsubprocOptions.klass, "flags=", _wrap_NcsubprocOptions_flags_set, -1);
+  rb_define_method(SwigClassNcsubprocOptions.klass, "flags", _wrap_NcsubprocOptions_flags_get, -1);
+  SwigClassNcsubprocOptions.mark = 0;
+  SwigClassNcsubprocOptions.destroy = (void (*)(void *)) free_ncsubproc_options;
+  SwigClassNcsubprocOptions.trackObjects = 0;
   rb_define_module_function(mNotcurses, "ncsubproc_createv", _wrap_ncsubproc_createv, -1);
   rb_define_module_function(mNotcurses, "ncsubproc_createvp", _wrap_ncsubproc_createvp, -1);
   rb_define_module_function(mNotcurses, "ncsubproc_createvpe", _wrap_ncsubproc_createvpe, -1);
@@ -38614,19 +38748,19 @@ SWIGEXPORT void Init_notcurses(void) {
   rb_define_const(mNotcurses, "NCREADER_OPTION_NOCMDKEYS", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0004ull)));
   rb_define_const(mNotcurses, "NCREADER_OPTION_CURSOR", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0008ull)));
   
-  SwigClassNcreader_options.klass = rb_define_class_under(mNotcurses, "Ncreader_options", rb_cObject);
-  SWIG_TypeClientData(SWIGTYPE_p_ncreader_options, (void *) &SwigClassNcreader_options);
-  rb_define_alloc_func(SwigClassNcreader_options.klass, _wrap_ncreader_options_allocate);
-  rb_define_method(SwigClassNcreader_options.klass, "initialize", _wrap_new_ncreader_options, -1);
-  rb_define_method(SwigClassNcreader_options.klass, "tchannels=", _wrap_ncreader_options_tchannels_set, -1);
-  rb_define_method(SwigClassNcreader_options.klass, "tchannels", _wrap_ncreader_options_tchannels_get, -1);
-  rb_define_method(SwigClassNcreader_options.klass, "tattrword=", _wrap_ncreader_options_tattrword_set, -1);
-  rb_define_method(SwigClassNcreader_options.klass, "tattrword", _wrap_ncreader_options_tattrword_get, -1);
-  rb_define_method(SwigClassNcreader_options.klass, "flags=", _wrap_ncreader_options_flags_set, -1);
-  rb_define_method(SwigClassNcreader_options.klass, "flags", _wrap_ncreader_options_flags_get, -1);
-  SwigClassNcreader_options.mark = 0;
-  SwigClassNcreader_options.destroy = (void (*)(void *)) free_ncreader_options;
-  SwigClassNcreader_options.trackObjects = 0;
+  SwigClassNcreaderOptions.klass = rb_define_class_under(mNotcurses, "NcreaderOptions", rb_cObject);
+  SWIG_TypeClientData(SWIGTYPE_p_ncreader_options, (void *) &SwigClassNcreaderOptions);
+  rb_define_alloc_func(SwigClassNcreaderOptions.klass, _wrap_NcreaderOptions_allocate);
+  rb_define_method(SwigClassNcreaderOptions.klass, "initialize", _wrap_new_NcreaderOptions, -1);
+  rb_define_method(SwigClassNcreaderOptions.klass, "tchannels=", _wrap_NcreaderOptions_tchannels_set, -1);
+  rb_define_method(SwigClassNcreaderOptions.klass, "tchannels", _wrap_NcreaderOptions_tchannels_get, -1);
+  rb_define_method(SwigClassNcreaderOptions.klass, "tattrword=", _wrap_NcreaderOptions_tattrword_set, -1);
+  rb_define_method(SwigClassNcreaderOptions.klass, "tattrword", _wrap_NcreaderOptions_tattrword_get, -1);
+  rb_define_method(SwigClassNcreaderOptions.klass, "flags=", _wrap_NcreaderOptions_flags_set, -1);
+  rb_define_method(SwigClassNcreaderOptions.klass, "flags", _wrap_NcreaderOptions_flags_get, -1);
+  SwigClassNcreaderOptions.mark = 0;
+  SwigClassNcreaderOptions.destroy = (void (*)(void *)) free_ncreader_options;
+  SwigClassNcreaderOptions.trackObjects = 0;
   rb_define_module_function(mNotcurses, "ncreader_create", _wrap_ncreader_create, -1);
   rb_define_module_function(mNotcurses, "ncreader_clear", _wrap_ncreader_clear, -1);
   rb_define_module_function(mNotcurses, "ncreader_plane", _wrap_ncreader_plane, -1);

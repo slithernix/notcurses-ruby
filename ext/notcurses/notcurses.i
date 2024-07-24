@@ -67,6 +67,10 @@
 %include <ruby/timeval.i>
 %include <ruby/typemaps.i>
 
+// This should change things like notcurses_options to NotcursesOptions,
+// instead of the default Notcurses_options
+%rename("%(camelcase)s", %$isclass) "";
+
 // IO
 %{
 #include <fcntl.h>
@@ -217,11 +221,6 @@ static const char* get_file_mode(int fd) {
   $1 = &temp;
 }
 
-//%typemap(in) char* (char temp) {
-//  temp = NUM2CHR($input);
-//  $1 = &temp;
-//}
-
 %typemap(in) unsigned char* (unsigned char temp) {
   temp = NUM2CHR($input);
   $1 = &temp;
@@ -242,6 +241,36 @@ static const char* get_file_mode(int fd) {
     $result = INT2NUM(*$1);
   }
 }
+
+// Create static inlines for macros that are fake functions
+%inline %{
+#include <notcurses/notcurses.h>
+
+// Function equivalent of NCCHANNEL_INITIALIZER macro
+uint32_t ncchannel_initializer(
+  uint32_t r,
+  uint32_t g,
+  uint32_t b
+) {
+  return ((r << 16u) + (g << 8u) + b + NC_BGDEFAULT_MASK);
+}
+
+// Function equivalent of NCCHANNELS_INITIALIZER macro
+uint64_t ncchannels_initializer(
+  uint32_t fr,
+  uint32_t fg,
+  uint32_t fb,
+  uint32_t br,
+  uint32_t bg,
+  uint32_t bb
+) {
+
+  uint64_t tmp_fg_chan = ((uint64_t)ncchannel_initializer(fr, fg, fb) << 32ull);
+  uint64_t tmp_bg_chan = ncchannel_initializer(br, bg, bb);
+
+  return tmp_fg_chan + tmp_bg_chan;
+}
+%}
 
 %{
 #include "version.h"
