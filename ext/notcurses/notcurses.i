@@ -1,11 +1,11 @@
 %module notcurses
-%include <ruby/rubywstrings.swg>
-%ignore ALLOC;
-%ignore API;
-%ignore __attribute__;
-%ignore __attribute;
-%ignore __declspec;
-%ignore __nonnull;
+
+// This should change things like notcurses_options to NotcursesOptions,
+// instead of the default Notcurses_options
+%rename("%(camelcase)s", %$isclass) "";
+
+// These empty defines are needed because SWIG seems to think compound macros
+// are syntax errors.
 %define __attribute__(x)
 %enddef
 %define __attribute(x)
@@ -14,6 +14,8 @@
 %enddef
 %define __nonnull(x)
 %enddef
+
+%include <ruby/rubywstrings.swg>
 %include <./modified_ruby_std_wstring.i>
 
 %include <carrays.i>
@@ -67,11 +69,6 @@
 %include <ruby/timeval.i>
 %include <ruby/typemaps.i>
 
-// This should change things like notcurses_options to NotcursesOptions,
-// instead of the default Notcurses_options
-%rename("%(camelcase)s", %$isclass) "";
-
-// IO
 %{
 #include <fcntl.h>
 #include <unistd.h>
@@ -92,6 +89,7 @@ static const char* get_file_mode(int fd) {
 }
 %}
 
+// IO TypeMaps
 %typemap(in) FILE* {
   if ($input == Qnil) {
     $1 = NULL;
@@ -242,10 +240,18 @@ static const char* get_file_mode(int fd) {
   }
 }
 
-// Create static inlines for macros that are fake functions
+// Stuff in the inline block is both written to the generated C code AND has
+// swig wrappers generated for the functions.
 %inline %{
+#include <notcurses/ncport.h>
+#include <notcurses/version.h>
+#include <notcurses/nckeys.h>
+#include <notcurses/ncseqs.h>
 #include <notcurses/notcurses.h>
+#include <notcurses/direct.h>
 
+
+// Put fake function macros here.
 // Function equivalent of NCCHANNEL_INITIALIZER macro
 uint32_t ncchannel_initializer(
   uint32_t r,
@@ -270,15 +276,9 @@ uint64_t ncchannels_initializer(
 
   return tmp_fg_chan + tmp_bg_chan;
 }
-%}
 
-%{
-#include "version.h"
-#include "nckeys.h"
-#include "ncseqs.h"
-#include "direct.h"
-#include "notcurses.h"
-
+// Prototypes for functions that replace va_list arg functions, actual
+// definitions are in .c files in this current directory.
 int ruby_ncplane_vprintf_yx(struct ncplane* n, int y, int x, const char* format, VALUE rb_args);
 int ruby_ncplane_vprintf_aligned(struct ncplane* n, int y, ncalign_e align, const char* format, VALUE rb_args);
 int ruby_ncplane_vprintf_stained(struct ncplane* n, const char* format, VALUE rb_args);
@@ -288,23 +288,25 @@ int ruby_ncplane_vprintf(struct ncplane* n, const char* format, VALUE rb_args) {
 }
 %}
 
-// Ignore problematic functions
+// Ignore problematic functions (va_list stuff)
 %ignore ncplane_vprintf_yx;
 %ignore ncplane_vprintf;
 %ignore ncplane_vprintf_aligned;
 %ignore ncplane_vprintf_stained;
 
-%include "version.h"
-%include "nckeys.h"
-%include "ncseqs.h"
-%include "direct.h"
-%include "notcurses.h"
+%include <notcurses/ncport.h>
+%include <notcurses/version.h>
+%include <notcurses/nckeys.h>
+%include <notcurses/ncseqs.h>
+%include <notcurses/notcurses.h>
+%include <notcurses/direct.h>
 
 %rename("ncplane_vprintf_yx") ruby_ncplane_vprintf_yx;
 %rename("ncplane_vprintf_aligned") ruby_ncplane_vprintf_aligned;
 %rename("ncplane_vprintf_stained") ruby_ncplane_vprintf_stained;
 %rename("ncplane_vprintf") ruby_ncplane_vprintf;
 
+// Still a little unsure why I need the prototypes in two places, oh well
 int ruby_ncplane_vprintf_yx(struct ncplane* n, int y, int x, const char* format, VALUE rb_args);
 int ruby_ncplane_vprintf_aligned(struct ncplane* n, int y, ncalign_e align, const char* format, VALUE rb_args);
 int ruby_ncplane_vprintf_stained(struct ncplane* n, const char* format, VALUE rb_args);

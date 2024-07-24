@@ -2324,8 +2324,15 @@ static const char* get_file_mode(int fd) {
 }
 
 
+#include <notcurses/ncport.h>
+#include <notcurses/version.h>
+#include <notcurses/nckeys.h>
+#include <notcurses/ncseqs.h>
 #include <notcurses/notcurses.h>
+#include <notcurses/direct.h>
 
+
+// Put fake function macros here.
 // Function equivalent of NCCHANNEL_INITIALIZER macro
 uint32_t ncchannel_initializer(
   uint32_t r,
@@ -2349,6 +2356,16 @@ uint64_t ncchannels_initializer(
   uint64_t tmp_bg_chan = ncchannel_initializer(br, bg, bb);
 
   return tmp_fg_chan + tmp_bg_chan;
+}
+
+// Prototypes for functions that replace va_list arg functions, actual
+// definitions are in .c files in this current directory.
+int ruby_ncplane_vprintf_yx(struct ncplane* n, int y, int x, const char* format, VALUE rb_args);
+int ruby_ncplane_vprintf_aligned(struct ncplane* n, int y, ncalign_e align, const char* format, VALUE rb_args);
+int ruby_ncplane_vprintf_stained(struct ncplane* n, const char* format, VALUE rb_args);
+
+int ruby_ncplane_vprintf(struct ncplane* n, const char* format, VALUE rb_args) {
+  return ruby_ncplane_vprintf_yx(n, -1, -1, format, rb_args);
 }
 
 
@@ -2375,25 +2392,17 @@ SWIG_From_unsigned_SS_int  (unsigned int value)
 }
 
 
-#include "version.h"
-#include "nckeys.h"
-#include "ncseqs.h"
-#include "direct.h"
-#include "notcurses.h"
-
-int ruby_ncplane_vprintf_yx(struct ncplane* n, int y, int x, const char* format, VALUE rb_args);
-int ruby_ncplane_vprintf_aligned(struct ncplane* n, int y, ncalign_e align, const char* format, VALUE rb_args);
-int ruby_ncplane_vprintf_stained(struct ncplane* n, const char* format, VALUE rb_args);
-
-int ruby_ncplane_vprintf(struct ncplane* n, const char* format, VALUE rb_args) {
-  return ruby_ncplane_vprintf_yx(n, -1, -1, format, rb_args);
-}
-
-
 SWIGINTERNINLINE VALUE
 SWIG_From_int  (int value)
 {    
   return SWIG_From_long  (value);
+}
+
+
+SWIGINTERNINLINE VALUE 
+SWIG_FromCharPtr(const char *cptr)
+{ 
+  return SWIG_FromCharPtrAndSize(cptr, (cptr ? strlen(cptr) : 0));
 }
 
 
@@ -2455,13 +2464,6 @@ SWIG_FromWCharPtr(const wchar_t *cptr)
 }
 
 
-SWIGINTERNINLINE VALUE 
-SWIG_FromCharPtr(const char *cptr)
-{ 
-  return SWIG_FromCharPtrAndSize(cptr, (cptr ? strlen(cptr) : 0));
-}
-
-
 #ifdef SWIG_LONG_LONG_AVAILABLE
 SWIGINTERNINLINE VALUE 
 SWIG_From_unsigned_SS_long_SS_long  (unsigned long long value)
@@ -2469,44 +2471,6 @@ SWIG_From_unsigned_SS_long_SS_long  (unsigned long long value)
   return ULL2NUM(value);
 }
 #endif
-
-
-SWIGINTERNINLINE VALUE
-SWIG_From_unsigned_SS_short  (unsigned short value)
-{    
-  return SWIG_From_unsigned_SS_long  (value);
-}
-
-
-SWIGINTERN int
-SWIG_AsWCharPtrAndSize(VALUE obj, wchar_t **cptr, size_t *psize, int *alloc)
-{
-  rb_encoding* wstr_enc = swig_ruby_wstring_encoding;
-
-  if (TYPE(obj) == T_STRING) {
-    VALUE rstr = rb_str_conv_enc(obj, rb_enc_get(obj), wstr_enc);
-    wchar_t* cstr = (wchar_t*) StringValuePtr(rstr);
-    size_t   size = RSTRING_LEN(rstr) / sizeof(wchar_t) + 1;
-
-    if ( RSTRING_LEN(rstr) % sizeof(wchar_t) != 0 ) {
-        rb_raise(rb_eRuntimeError,
-                 "The length of the byte sequence of converted string is not a multiplier of sizeof(wchar_t). Invalid byte sequence is given. Or invalid SWIG_RUBY_WSTRING_ENCODING is given when compiling this binding.");
-    }
-    if (cptr && alloc)  {
-      *alloc = SWIG_NEWOBJ;
-      *cptr = (wchar_t *)calloc(size, sizeof(wchar_t));
-      memmove(*cptr, cstr, RSTRING_LEN(rstr));
-    }
-    if (psize) *psize = size;
-
-    return SWIG_OK;
-  } else {
-    return SWIG_TypeError;
-  }
-}
-
-
-
 
 
 SWIGINTERN int
@@ -2545,6 +2509,13 @@ SWIG_AsVal_unsigned_SS_short (VALUE obj, unsigned short *val)
     }
   }  
   return res;
+}
+
+
+SWIGINTERNINLINE VALUE
+SWIG_From_unsigned_SS_short  (unsigned short value)
+{    
+  return SWIG_From_unsigned_SS_long  (value);
 }
 
 
@@ -2620,6 +2591,37 @@ SWIG_AsVal_bool (VALUE obj, bool *val)
   }  
   return SWIG_TypeError;
 }
+
+
+SWIGINTERN int
+SWIG_AsWCharPtrAndSize(VALUE obj, wchar_t **cptr, size_t *psize, int *alloc)
+{
+  rb_encoding* wstr_enc = swig_ruby_wstring_encoding;
+
+  if (TYPE(obj) == T_STRING) {
+    VALUE rstr = rb_str_conv_enc(obj, rb_enc_get(obj), wstr_enc);
+    wchar_t* cstr = (wchar_t*) StringValuePtr(rstr);
+    size_t   size = RSTRING_LEN(rstr) / sizeof(wchar_t) + 1;
+
+    if ( RSTRING_LEN(rstr) % sizeof(wchar_t) != 0 ) {
+        rb_raise(rb_eRuntimeError,
+                 "The length of the byte sequence of converted string is not a multiplier of sizeof(wchar_t). Invalid byte sequence is given. Or invalid SWIG_RUBY_WSTRING_ENCODING is given when compiling this binding.");
+    }
+    if (cptr && alloc)  {
+      *alloc = SWIG_NEWOBJ;
+      *cptr = (wchar_t *)calloc(size, sizeof(wchar_t));
+      memmove(*cptr, cstr, RSTRING_LEN(rstr));
+    }
+    if (psize) *psize = size;
+
+    return SWIG_OK;
+  } else {
+    return SWIG_TypeError;
+  }
+}
+
+
+
 
 
 SWIGINTERN int
@@ -2794,10 +2796,10 @@ fail:
 }
 
 
-static swig_class SwigClassImaxdiv_t;
+static swig_class SwigClassImaxdivT;
 
 SWIGINTERN VALUE
-_wrap_imaxdiv_t_quot_set(int argc, VALUE *argv, VALUE self) {
+_wrap_ImaxdivT_quot_set(int argc, VALUE *argv, VALUE self) {
   imaxdiv_t *arg1 = (imaxdiv_t *) 0 ;
   long arg2 ;
   void *argp1 = 0 ;
@@ -2826,7 +2828,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_imaxdiv_t_quot_get(int argc, VALUE *argv, VALUE self) {
+_wrap_ImaxdivT_quot_get(int argc, VALUE *argv, VALUE self) {
   imaxdiv_t *arg1 = (imaxdiv_t *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -2850,7 +2852,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_imaxdiv_t_rem_set(int argc, VALUE *argv, VALUE self) {
+_wrap_ImaxdivT_rem_set(int argc, VALUE *argv, VALUE self) {
   imaxdiv_t *arg1 = (imaxdiv_t *) 0 ;
   long arg2 ;
   void *argp1 = 0 ;
@@ -2879,7 +2881,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_imaxdiv_t_rem_get(int argc, VALUE *argv, VALUE self) {
+_wrap_ImaxdivT_rem_get(int argc, VALUE *argv, VALUE self) {
   imaxdiv_t *arg1 = (imaxdiv_t *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -2904,9 +2906,9 @@ fail:
 
 SWIGINTERN VALUE
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
-_wrap_imaxdiv_t_allocate(VALUE self)
+_wrap_ImaxdivT_allocate(VALUE self)
 #else
-_wrap_imaxdiv_t_allocate(int argc, VALUE *argv, VALUE self)
+_wrap_ImaxdivT_allocate(int argc, VALUE *argv, VALUE self)
 #endif
 {
   VALUE vresult = SWIG_NewClassInstance(self, SWIGTYPE_p_imaxdiv_t);
@@ -2918,7 +2920,7 @@ _wrap_imaxdiv_t_allocate(int argc, VALUE *argv, VALUE self)
 
 
 SWIGINTERN VALUE
-_wrap_new_imaxdiv_t(int argc, VALUE *argv, VALUE self) {
+_wrap_new_ImaxdivT(int argc, VALUE *argv, VALUE self) {
   imaxdiv_t *result = 0 ;
   
   if ((argc < 0) || (argc > 0)) {
@@ -3665,6 +3667,206 @@ fail:
 
 
 SWIGINTERN VALUE
+_wrap_ruby_ncplane_vprintf_yx(int argc, VALUE *argv, VALUE self) {
+  struct ncplane *arg1 = (struct ncplane *) 0 ;
+  int arg2 ;
+  int arg3 ;
+  char *arg4 = (char *) 0 ;
+  VALUE arg5 = (VALUE) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  int res4 ;
+  char *buf4 = 0 ;
+  int alloc4 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 5) || (argc > 5)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 5)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncplane, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncplane *","ruby_ncplane_vprintf_yx", 1, argv[0] )); 
+  }
+  arg1 = (struct ncplane *)(argp1);
+  ecode2 = SWIG_AsVal_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "int","ruby_ncplane_vprintf_yx", 2, argv[1] ));
+  } 
+  arg2 = (int)(val2);
+  ecode3 = SWIG_AsVal_int(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "int","ruby_ncplane_vprintf_yx", 3, argv[2] ));
+  } 
+  arg3 = (int)(val3);
+  res4 = SWIG_AsCharPtrAndSize(argv[3], &buf4, NULL, &alloc4);
+  if (!SWIG_IsOK(res4)) {
+    SWIG_exception_fail(SWIG_ArgError(res4), Ruby_Format_TypeError( "", "char const *","ruby_ncplane_vprintf_yx", 4, argv[3] ));
+  }
+  arg4 = (char *)(buf4);
+  arg5 = argv[4];
+  result = (int)ruby_ncplane_vprintf_yx(arg1,arg2,arg3,(char const *)arg4,arg5);
+  vresult = SWIG_From_int((int)(result));
+  {
+    if (arg4 != NULL) {
+      vresult = INT2NUM(*arg4);
+    }
+  }
+  if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
+  return vresult;
+fail:
+  if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ruby_ncplane_vprintf_aligned(int argc, VALUE *argv, VALUE self) {
+  struct ncplane *arg1 = (struct ncplane *) 0 ;
+  int arg2 ;
+  ncalign_e arg3 ;
+  char *arg4 = (char *) 0 ;
+  VALUE arg5 = (VALUE) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  int res4 ;
+  char *buf4 = 0 ;
+  int alloc4 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 5) || (argc > 5)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 5)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncplane, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncplane *","ruby_ncplane_vprintf_aligned", 1, argv[0] )); 
+  }
+  arg1 = (struct ncplane *)(argp1);
+  ecode2 = SWIG_AsVal_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "int","ruby_ncplane_vprintf_aligned", 2, argv[1] ));
+  } 
+  arg2 = (int)(val2);
+  ecode3 = SWIG_AsVal_int(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "ncalign_e","ruby_ncplane_vprintf_aligned", 3, argv[2] ));
+  } 
+  arg3 = (ncalign_e)(val3);
+  res4 = SWIG_AsCharPtrAndSize(argv[3], &buf4, NULL, &alloc4);
+  if (!SWIG_IsOK(res4)) {
+    SWIG_exception_fail(SWIG_ArgError(res4), Ruby_Format_TypeError( "", "char const *","ruby_ncplane_vprintf_aligned", 4, argv[3] ));
+  }
+  arg4 = (char *)(buf4);
+  arg5 = argv[4];
+  result = (int)ruby_ncplane_vprintf_aligned(arg1,arg2,arg3,(char const *)arg4,arg5);
+  vresult = SWIG_From_int((int)(result));
+  {
+    if (arg4 != NULL) {
+      vresult = INT2NUM(*arg4);
+    }
+  }
+  if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
+  return vresult;
+fail:
+  if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ruby_ncplane_vprintf_stained(int argc, VALUE *argv, VALUE self) {
+  struct ncplane *arg1 = (struct ncplane *) 0 ;
+  char *arg2 = (char *) 0 ;
+  VALUE arg3 = (VALUE) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 3) || (argc > 3)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 3)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncplane, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncplane *","ruby_ncplane_vprintf_stained", 1, argv[0] )); 
+  }
+  arg1 = (struct ncplane *)(argp1);
+  res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "char const *","ruby_ncplane_vprintf_stained", 2, argv[1] ));
+  }
+  arg2 = (char *)(buf2);
+  arg3 = argv[2];
+  result = (int)ruby_ncplane_vprintf_stained(arg1,(char const *)arg2,arg3);
+  vresult = SWIG_From_int((int)(result));
+  {
+    if (arg2 != NULL) {
+      vresult = INT2NUM(*arg2);
+    }
+  }
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return vresult;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ruby_ncplane_vprintf(int argc, VALUE *argv, VALUE self) {
+  struct ncplane *arg1 = (struct ncplane *) 0 ;
+  char *arg2 = (char *) 0 ;
+  VALUE arg3 = (VALUE) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 3) || (argc > 3)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 3)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncplane, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncplane *","ruby_ncplane_vprintf", 1, argv[0] )); 
+  }
+  arg1 = (struct ncplane *)(argp1);
+  res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "char const *","ruby_ncplane_vprintf", 2, argv[1] ));
+  }
+  arg2 = (char *)(buf2);
+  arg3 = argv[2];
+  result = (int)ruby_ncplane_vprintf(arg1,(char const *)arg2,arg3);
+  vresult = SWIG_From_int((int)(result));
+  {
+    if (arg2 != NULL) {
+      vresult = INT2NUM(*arg2);
+    }
+  }
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return vresult;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
 _wrap_nckey_synthesized_p(int argc, VALUE *argv, VALUE self) {
   uint32_t arg1 ;
   unsigned int val1 ;
@@ -3753,2659 +3955,6 @@ _wrap_nckey_supppuab_p(int argc, VALUE *argv, VALUE self) {
   } 
   arg1 = (uint32_t)(val1);
   result = (bool)nckey_supppuab_p(arg1);
-  vresult = SWIG_From_bool((bool)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_init(int argc, VALUE *argv, VALUE self) {
-  char *arg1 = (char *) 0 ;
-  FILE *arg2 = (FILE *) 0 ;
-  uint64_t arg3 ;
-  int res1 ;
-  char *buf1 = 0 ;
-  int alloc1 = 0 ;
-  unsigned long val3 ;
-  int ecode3 = 0 ;
-  struct ncdirect *result = 0 ;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 3) || (argc > 3)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 3)",argc); SWIG_fail;
-  }
-  res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "char const *","ncdirect_init", 1, argv[0] ));
-  }
-  arg1 = (char *)(buf1);
-  {
-    if (argv[1] == Qnil) {
-      arg2 = NULL;
-    } else if (rb_respond_to(argv[1], rb_intern("fileno"))) {
-      int fd = NUM2INT(rb_funcall(argv[1], rb_intern("fileno"), 0));
-      const char* mode = get_file_mode(fd);
-      arg2 = fdopen(dup(fd), mode);
-      if (!arg2) {
-        rb_raise(rb_eIOError, "Unable to get FILE* from Ruby IO object");
-      }
-    } else {
-      SWIG_exception(SWIG_TypeError, "Expected IO object or nil");
-    }
-  }
-  ecode3 = SWIG_AsVal_unsigned_SS_long(argv[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "uint64_t","ncdirect_init", 3, argv[2] ));
-  } 
-  arg3 = (uint64_t)(val3);
-  result = (struct ncdirect *)ncdirect_init((char const *)arg1,arg2,arg3);
-  vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ncdirect, 0 |  0 );
-  {
-    if (arg1 != NULL) {
-      vresult = INT2NUM(*arg1);
-    }
-  }
-  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
-  return vresult;
-fail:
-  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_core_init(int argc, VALUE *argv, VALUE self) {
-  char *arg1 = (char *) 0 ;
-  FILE *arg2 = (FILE *) 0 ;
-  uint64_t arg3 ;
-  int res1 ;
-  char *buf1 = 0 ;
-  int alloc1 = 0 ;
-  unsigned long val3 ;
-  int ecode3 = 0 ;
-  struct ncdirect *result = 0 ;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 3) || (argc > 3)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 3)",argc); SWIG_fail;
-  }
-  res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "char const *","ncdirect_core_init", 1, argv[0] ));
-  }
-  arg1 = (char *)(buf1);
-  {
-    if (argv[1] == Qnil) {
-      arg2 = NULL;
-    } else if (rb_respond_to(argv[1], rb_intern("fileno"))) {
-      int fd = NUM2INT(rb_funcall(argv[1], rb_intern("fileno"), 0));
-      const char* mode = get_file_mode(fd);
-      arg2 = fdopen(dup(fd), mode);
-      if (!arg2) {
-        rb_raise(rb_eIOError, "Unable to get FILE* from Ruby IO object");
-      }
-    } else {
-      SWIG_exception(SWIG_TypeError, "Expected IO object or nil");
-    }
-  }
-  ecode3 = SWIG_AsVal_unsigned_SS_long(argv[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "uint64_t","ncdirect_core_init", 3, argv[2] ));
-  } 
-  arg3 = (uint64_t)(val3);
-  result = (struct ncdirect *)ncdirect_core_init((char const *)arg1,arg2,arg3);
-  vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ncdirect, 0 |  0 );
-  {
-    if (arg1 != NULL) {
-      vresult = INT2NUM(*arg1);
-    }
-  }
-  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
-  return vresult;
-fail:
-  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_readline(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  char *arg2 = (char *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
-  char *result = 0 ;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 2) || (argc > 2)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_readline", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "char const *","ncdirect_readline", 2, argv[1] ));
-  }
-  arg2 = (char *)(buf2);
-  result = (char *)ncdirect_readline(arg1,(char const *)arg2);
-  vresult = SWIG_FromCharPtr((const char *)result);
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
-  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
-fail:
-  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_set_fg_rgb(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  unsigned int arg2 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  unsigned int val2 ;
-  int ecode2 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 2) || (argc > 2)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_set_fg_rgb", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_unsigned_SS_int(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "unsigned int","ncdirect_set_fg_rgb", 2, argv[1] ));
-  } 
-  arg2 = (unsigned int)(val2);
-  result = (int)ncdirect_set_fg_rgb(arg1,arg2);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_set_bg_rgb(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  unsigned int arg2 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  unsigned int val2 ;
-  int ecode2 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 2) || (argc > 2)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_set_bg_rgb", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_unsigned_SS_int(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "unsigned int","ncdirect_set_bg_rgb", 2, argv[1] ));
-  } 
-  arg2 = (unsigned int)(val2);
-  result = (int)ncdirect_set_bg_rgb(arg1,arg2);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_set_fg_palindex(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  int arg2 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int val2 ;
-  int ecode2 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 2) || (argc > 2)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_set_fg_palindex", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_int(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "int","ncdirect_set_fg_palindex", 2, argv[1] ));
-  } 
-  arg2 = (int)(val2);
-  result = (int)ncdirect_set_fg_palindex(arg1,arg2);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_set_bg_palindex(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  int arg2 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int val2 ;
-  int ecode2 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 2) || (argc > 2)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_set_bg_palindex", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_int(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "int","ncdirect_set_bg_palindex", 2, argv[1] ));
-  } 
-  arg2 = (int)(val2);
-  result = (int)ncdirect_set_bg_palindex(arg1,arg2);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_palette_size(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  unsigned int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_palette_size", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (unsigned int)ncdirect_palette_size((struct ncdirect const *)arg1);
-  vresult = SWIG_From_unsigned_SS_int((unsigned int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_putstr(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  uint64_t arg2 ;
-  char *arg3 = (char *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  unsigned long val2 ;
-  int ecode2 = 0 ;
-  int res3 ;
-  char *buf3 = 0 ;
-  int alloc3 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 3) || (argc > 3)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 3)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_putstr", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_unsigned_SS_long(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "uint64_t","ncdirect_putstr", 2, argv[1] ));
-  } 
-  arg2 = (uint64_t)(val2);
-  res3 = SWIG_AsCharPtrAndSize(argv[2], &buf3, NULL, &alloc3);
-  if (!SWIG_IsOK(res3)) {
-    SWIG_exception_fail(SWIG_ArgError(res3), Ruby_Format_TypeError( "", "char const *","ncdirect_putstr", 3, argv[2] ));
-  }
-  arg3 = (char *)(buf3);
-  result = (int)ncdirect_putstr(arg1,arg2,(char const *)arg3);
-  vresult = SWIG_From_int((int)(result));
-  {
-    if (arg3 != NULL) {
-      vresult = INT2NUM(*arg3);
-    }
-  }
-  if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
-  return vresult;
-fail:
-  if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_putegc(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  uint64_t arg2 ;
-  char *arg3 = (char *) 0 ;
-  int *arg4 = (int *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  unsigned long val2 ;
-  int ecode2 = 0 ;
-  int res3 ;
-  char *buf3 = 0 ;
-  int alloc3 = 0 ;
-  int temp4 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 4) || (argc > 4)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 4)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_putegc", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_unsigned_SS_long(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "uint64_t","ncdirect_putegc", 2, argv[1] ));
-  } 
-  arg2 = (uint64_t)(val2);
-  res3 = SWIG_AsCharPtrAndSize(argv[2], &buf3, NULL, &alloc3);
-  if (!SWIG_IsOK(res3)) {
-    SWIG_exception_fail(SWIG_ArgError(res3), Ruby_Format_TypeError( "", "char const *","ncdirect_putegc", 3, argv[2] ));
-  }
-  arg3 = (char *)(buf3);
-  {
-    temp4 = NUM2INT(argv[3]);
-    arg4 = &temp4;
-  }
-  result = (int)ncdirect_putegc(arg1,arg2,(char const *)arg3,arg4);
-  vresult = SWIG_From_int((int)(result));
-  {
-    if (arg3 != NULL) {
-      vresult = INT2NUM(*arg3);
-    }
-  }
-  {
-    if (arg4 != NULL) {
-      vresult = INT2NUM(*arg4);
-    }
-  }
-  if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
-  return vresult;
-fail:
-  if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_printf_aligned(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  int arg2 ;
-  ncalign_e arg3 ;
-  char *arg4 = (char *) 0 ;
-  void *arg5 = 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int val2 ;
-  int ecode2 = 0 ;
-  int val3 ;
-  int ecode3 = 0 ;
-  int res4 ;
-  char *buf4 = 0 ;
-  int alloc4 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if (argc < 4) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 4)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_printf_aligned", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_int(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "int","ncdirect_printf_aligned", 2, argv[1] ));
-  } 
-  arg2 = (int)(val2);
-  ecode3 = SWIG_AsVal_int(argv[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "ncalign_e","ncdirect_printf_aligned", 3, argv[2] ));
-  } 
-  arg3 = (ncalign_e)(val3);
-  res4 = SWIG_AsCharPtrAndSize(argv[3], &buf4, NULL, &alloc4);
-  if (!SWIG_IsOK(res4)) {
-    SWIG_exception_fail(SWIG_ArgError(res4), Ruby_Format_TypeError( "", "char const *","ncdirect_printf_aligned", 4, argv[3] ));
-  }
-  arg4 = (char *)(buf4);
-  result = (int)ncdirect_printf_aligned(arg1,arg2,arg3,(char const *)arg4,arg5);
-  vresult = SWIG_From_int((int)(result));
-  {
-    if (arg4 != NULL) {
-      vresult = INT2NUM(*arg4);
-    }
-  }
-  if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
-  return vresult;
-fail:
-  if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_flush(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_flush", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (int)ncdirect_flush((struct ncdirect const *)arg1);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_set_bg_rgb8(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  unsigned int arg2 ;
-  unsigned int arg3 ;
-  unsigned int arg4 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  unsigned int val2 ;
-  int ecode2 = 0 ;
-  unsigned int val3 ;
-  int ecode3 = 0 ;
-  unsigned int val4 ;
-  int ecode4 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 4) || (argc > 4)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 4)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_set_bg_rgb8", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_unsigned_SS_int(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "unsigned int","ncdirect_set_bg_rgb8", 2, argv[1] ));
-  } 
-  arg2 = (unsigned int)(val2);
-  ecode3 = SWIG_AsVal_unsigned_SS_int(argv[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "unsigned int","ncdirect_set_bg_rgb8", 3, argv[2] ));
-  } 
-  arg3 = (unsigned int)(val3);
-  ecode4 = SWIG_AsVal_unsigned_SS_int(argv[3], &val4);
-  if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "unsigned int","ncdirect_set_bg_rgb8", 4, argv[3] ));
-  } 
-  arg4 = (unsigned int)(val4);
-  result = (int)ncdirect_set_bg_rgb8(arg1,arg2,arg3,arg4);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_set_fg_rgb8(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  unsigned int arg2 ;
-  unsigned int arg3 ;
-  unsigned int arg4 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  unsigned int val2 ;
-  int ecode2 = 0 ;
-  unsigned int val3 ;
-  int ecode3 = 0 ;
-  unsigned int val4 ;
-  int ecode4 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 4) || (argc > 4)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 4)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_set_fg_rgb8", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_unsigned_SS_int(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "unsigned int","ncdirect_set_fg_rgb8", 2, argv[1] ));
-  } 
-  arg2 = (unsigned int)(val2);
-  ecode3 = SWIG_AsVal_unsigned_SS_int(argv[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "unsigned int","ncdirect_set_fg_rgb8", 3, argv[2] ));
-  } 
-  arg3 = (unsigned int)(val3);
-  ecode4 = SWIG_AsVal_unsigned_SS_int(argv[3], &val4);
-  if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "unsigned int","ncdirect_set_fg_rgb8", 4, argv[3] ));
-  } 
-  arg4 = (unsigned int)(val4);
-  result = (int)ncdirect_set_fg_rgb8(arg1,arg2,arg3,arg4);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_set_fg_default(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_set_fg_default", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (int)ncdirect_set_fg_default(arg1);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_set_bg_default(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_set_bg_default", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (int)ncdirect_set_bg_default(arg1);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_dim_x(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  unsigned int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_dim_x", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (unsigned int)ncdirect_dim_x(arg1);
-  vresult = SWIG_From_unsigned_SS_int((unsigned int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_dim_y(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  unsigned int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_dim_y", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (unsigned int)ncdirect_dim_y(arg1);
-  vresult = SWIG_From_unsigned_SS_int((unsigned int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_supported_styles(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  uint16_t result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_supported_styles", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (uint16_t)ncdirect_supported_styles((struct ncdirect const *)arg1);
-  vresult = SWIG_From_unsigned_SS_short((unsigned short)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_set_styles(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  unsigned int arg2 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  unsigned int val2 ;
-  int ecode2 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 2) || (argc > 2)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_set_styles", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_unsigned_SS_int(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "unsigned int","ncdirect_set_styles", 2, argv[1] ));
-  } 
-  arg2 = (unsigned int)(val2);
-  result = (int)ncdirect_set_styles(arg1,arg2);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_on_styles(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  unsigned int arg2 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  unsigned int val2 ;
-  int ecode2 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 2) || (argc > 2)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_on_styles", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_unsigned_SS_int(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "unsigned int","ncdirect_on_styles", 2, argv[1] ));
-  } 
-  arg2 = (unsigned int)(val2);
-  result = (int)ncdirect_on_styles(arg1,arg2);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_off_styles(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  unsigned int arg2 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  unsigned int val2 ;
-  int ecode2 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 2) || (argc > 2)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_off_styles", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_unsigned_SS_int(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "unsigned int","ncdirect_off_styles", 2, argv[1] ));
-  } 
-  arg2 = (unsigned int)(val2);
-  result = (int)ncdirect_off_styles(arg1,arg2);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_styles(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  uint16_t result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_styles", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (uint16_t)ncdirect_styles((struct ncdirect const *)arg1);
-  vresult = SWIG_From_unsigned_SS_short((unsigned short)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_cursor_move_yx(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  int arg2 ;
-  int arg3 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int val2 ;
-  int ecode2 = 0 ;
-  int val3 ;
-  int ecode3 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 3) || (argc > 3)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 3)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_cursor_move_yx", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_int(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "int","ncdirect_cursor_move_yx", 2, argv[1] ));
-  } 
-  arg2 = (int)(val2);
-  ecode3 = SWIG_AsVal_int(argv[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "int","ncdirect_cursor_move_yx", 3, argv[2] ));
-  } 
-  arg3 = (int)(val3);
-  result = (int)ncdirect_cursor_move_yx(arg1,arg2,arg3);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_cursor_enable(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_cursor_enable", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (int)ncdirect_cursor_enable(arg1);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_cursor_disable(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_cursor_disable", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (int)ncdirect_cursor_disable(arg1);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_cursor_up(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  int arg2 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int val2 ;
-  int ecode2 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 2) || (argc > 2)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_cursor_up", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_int(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "int","ncdirect_cursor_up", 2, argv[1] ));
-  } 
-  arg2 = (int)(val2);
-  result = (int)ncdirect_cursor_up(arg1,arg2);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_cursor_left(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  int arg2 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int val2 ;
-  int ecode2 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 2) || (argc > 2)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_cursor_left", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_int(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "int","ncdirect_cursor_left", 2, argv[1] ));
-  } 
-  arg2 = (int)(val2);
-  result = (int)ncdirect_cursor_left(arg1,arg2);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_cursor_right(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  int arg2 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int val2 ;
-  int ecode2 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 2) || (argc > 2)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_cursor_right", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_int(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "int","ncdirect_cursor_right", 2, argv[1] ));
-  } 
-  arg2 = (int)(val2);
-  result = (int)ncdirect_cursor_right(arg1,arg2);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_cursor_down(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  int arg2 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int val2 ;
-  int ecode2 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 2) || (argc > 2)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_cursor_down", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_int(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "int","ncdirect_cursor_down", 2, argv[1] ));
-  } 
-  arg2 = (int)(val2);
-  result = (int)ncdirect_cursor_down(arg1,arg2);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_cursor_yx(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  unsigned int *arg2 = (unsigned int *) 0 ;
-  unsigned int *arg3 = (unsigned int *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  unsigned int temp2 ;
-  unsigned int temp3 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 3) || (argc > 3)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 3)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_cursor_yx", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  {
-    temp2 = NUM2UINT(argv[1]);
-    arg2 = &temp2;
-  }
-  {
-    temp3 = NUM2UINT(argv[2]);
-    arg3 = &temp3;
-  }
-  result = (int)ncdirect_cursor_yx(arg1,arg2,arg3);
-  vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
-  {
-    if (arg3 != NULL) {
-      vresult = INT2NUM(*arg3);
-    }
-  }
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_cursor_push(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_cursor_push", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (int)ncdirect_cursor_push(arg1);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_cursor_pop(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_cursor_pop", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (int)ncdirect_cursor_pop(arg1);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_clear(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_clear", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (int)ncdirect_clear(arg1);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_capabilities(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  nccapabilities *result = 0 ;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_capabilities", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (nccapabilities *)ncdirect_capabilities((struct ncdirect const *)arg1);
-  vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_nccapabilities, 0 |  0 );
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_hline_interp(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  char *arg2 = (char *) 0 ;
-  unsigned int arg3 ;
-  uint64_t arg4 ;
-  uint64_t arg5 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
-  unsigned int val3 ;
-  int ecode3 = 0 ;
-  unsigned long val4 ;
-  int ecode4 = 0 ;
-  unsigned long val5 ;
-  int ecode5 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 5) || (argc > 5)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 5)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_hline_interp", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "char const *","ncdirect_hline_interp", 2, argv[1] ));
-  }
-  arg2 = (char *)(buf2);
-  ecode3 = SWIG_AsVal_unsigned_SS_int(argv[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "unsigned int","ncdirect_hline_interp", 3, argv[2] ));
-  } 
-  arg3 = (unsigned int)(val3);
-  ecode4 = SWIG_AsVal_unsigned_SS_long(argv[3], &val4);
-  if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "uint64_t","ncdirect_hline_interp", 4, argv[3] ));
-  } 
-  arg4 = (uint64_t)(val4);
-  ecode5 = SWIG_AsVal_unsigned_SS_long(argv[4], &val5);
-  if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "uint64_t","ncdirect_hline_interp", 5, argv[4] ));
-  } 
-  arg5 = (uint64_t)(val5);
-  result = (int)ncdirect_hline_interp(arg1,(char const *)arg2,arg3,arg4,arg5);
-  vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
-  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
-fail:
-  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_vline_interp(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  char *arg2 = (char *) 0 ;
-  unsigned int arg3 ;
-  uint64_t arg4 ;
-  uint64_t arg5 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
-  unsigned int val3 ;
-  int ecode3 = 0 ;
-  unsigned long val4 ;
-  int ecode4 = 0 ;
-  unsigned long val5 ;
-  int ecode5 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 5) || (argc > 5)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 5)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_vline_interp", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "char const *","ncdirect_vline_interp", 2, argv[1] ));
-  }
-  arg2 = (char *)(buf2);
-  ecode3 = SWIG_AsVal_unsigned_SS_int(argv[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "unsigned int","ncdirect_vline_interp", 3, argv[2] ));
-  } 
-  arg3 = (unsigned int)(val3);
-  ecode4 = SWIG_AsVal_unsigned_SS_long(argv[3], &val4);
-  if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "uint64_t","ncdirect_vline_interp", 4, argv[3] ));
-  } 
-  arg4 = (uint64_t)(val4);
-  ecode5 = SWIG_AsVal_unsigned_SS_long(argv[4], &val5);
-  if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "uint64_t","ncdirect_vline_interp", 5, argv[4] ));
-  } 
-  arg5 = (uint64_t)(val5);
-  result = (int)ncdirect_vline_interp(arg1,(char const *)arg2,arg3,arg4,arg5);
-  vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
-  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
-fail:
-  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_box(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  uint64_t arg2 ;
-  uint64_t arg3 ;
-  uint64_t arg4 ;
-  uint64_t arg5 ;
-  wchar_t *arg6 = (wchar_t *) 0 ;
-  unsigned int arg7 ;
-  unsigned int arg8 ;
-  unsigned int arg9 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  unsigned long val2 ;
-  int ecode2 = 0 ;
-  unsigned long val3 ;
-  int ecode3 = 0 ;
-  unsigned long val4 ;
-  int ecode4 = 0 ;
-  unsigned long val5 ;
-  int ecode5 = 0 ;
-  int res6 ;
-  wchar_t *buf6 = 0 ;
-  int alloc6 = 0 ;
-  unsigned int val7 ;
-  int ecode7 = 0 ;
-  unsigned int val8 ;
-  int ecode8 = 0 ;
-  unsigned int val9 ;
-  int ecode9 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 9) || (argc > 9)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 9)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_box", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_unsigned_SS_long(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "uint64_t","ncdirect_box", 2, argv[1] ));
-  } 
-  arg2 = (uint64_t)(val2);
-  ecode3 = SWIG_AsVal_unsigned_SS_long(argv[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "uint64_t","ncdirect_box", 3, argv[2] ));
-  } 
-  arg3 = (uint64_t)(val3);
-  ecode4 = SWIG_AsVal_unsigned_SS_long(argv[3], &val4);
-  if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "uint64_t","ncdirect_box", 4, argv[3] ));
-  } 
-  arg4 = (uint64_t)(val4);
-  ecode5 = SWIG_AsVal_unsigned_SS_long(argv[4], &val5);
-  if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "uint64_t","ncdirect_box", 5, argv[4] ));
-  } 
-  arg5 = (uint64_t)(val5);
-  res6 = SWIG_AsWCharPtrAndSize(argv[5], &buf6, NULL, &alloc6);
-  if (!SWIG_IsOK(res6)) {
-    SWIG_exception_fail(SWIG_ArgError(res6), Ruby_Format_TypeError( "", "wchar_t const *","ncdirect_box", 6, argv[5] ));
-  }
-  arg6 = (wchar_t *)(buf6);
-  ecode7 = SWIG_AsVal_unsigned_SS_int(argv[6], &val7);
-  if (!SWIG_IsOK(ecode7)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode7), Ruby_Format_TypeError( "", "unsigned int","ncdirect_box", 7, argv[6] ));
-  } 
-  arg7 = (unsigned int)(val7);
-  ecode8 = SWIG_AsVal_unsigned_SS_int(argv[7], &val8);
-  if (!SWIG_IsOK(ecode8)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode8), Ruby_Format_TypeError( "", "unsigned int","ncdirect_box", 8, argv[7] ));
-  } 
-  arg8 = (unsigned int)(val8);
-  ecode9 = SWIG_AsVal_unsigned_SS_int(argv[8], &val9);
-  if (!SWIG_IsOK(ecode9)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode9), Ruby_Format_TypeError( "", "unsigned int","ncdirect_box", 9, argv[8] ));
-  } 
-  arg9 = (unsigned int)(val9);
-  result = (int)ncdirect_box(arg1,arg2,arg3,arg4,arg5,(wchar_t const *)arg6,arg7,arg8,arg9);
-  vresult = SWIG_From_int((int)(result));
-  if (alloc6 == SWIG_NEWOBJ) free((char*)buf6);
-  return vresult;
-fail:
-  if (alloc6 == SWIG_NEWOBJ) free((char*)buf6);
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_light_box(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  uint64_t arg2 ;
-  uint64_t arg3 ;
-  uint64_t arg4 ;
-  uint64_t arg5 ;
-  unsigned int arg6 ;
-  unsigned int arg7 ;
-  unsigned int arg8 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  unsigned long val2 ;
-  int ecode2 = 0 ;
-  unsigned long val3 ;
-  int ecode3 = 0 ;
-  unsigned long val4 ;
-  int ecode4 = 0 ;
-  unsigned long val5 ;
-  int ecode5 = 0 ;
-  unsigned int val6 ;
-  int ecode6 = 0 ;
-  unsigned int val7 ;
-  int ecode7 = 0 ;
-  unsigned int val8 ;
-  int ecode8 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 8) || (argc > 8)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 8)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_light_box", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_unsigned_SS_long(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "uint64_t","ncdirect_light_box", 2, argv[1] ));
-  } 
-  arg2 = (uint64_t)(val2);
-  ecode3 = SWIG_AsVal_unsigned_SS_long(argv[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "uint64_t","ncdirect_light_box", 3, argv[2] ));
-  } 
-  arg3 = (uint64_t)(val3);
-  ecode4 = SWIG_AsVal_unsigned_SS_long(argv[3], &val4);
-  if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "uint64_t","ncdirect_light_box", 4, argv[3] ));
-  } 
-  arg4 = (uint64_t)(val4);
-  ecode5 = SWIG_AsVal_unsigned_SS_long(argv[4], &val5);
-  if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "uint64_t","ncdirect_light_box", 5, argv[4] ));
-  } 
-  arg5 = (uint64_t)(val5);
-  ecode6 = SWIG_AsVal_unsigned_SS_int(argv[5], &val6);
-  if (!SWIG_IsOK(ecode6)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode6), Ruby_Format_TypeError( "", "unsigned int","ncdirect_light_box", 6, argv[5] ));
-  } 
-  arg6 = (unsigned int)(val6);
-  ecode7 = SWIG_AsVal_unsigned_SS_int(argv[6], &val7);
-  if (!SWIG_IsOK(ecode7)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode7), Ruby_Format_TypeError( "", "unsigned int","ncdirect_light_box", 7, argv[6] ));
-  } 
-  arg7 = (unsigned int)(val7);
-  ecode8 = SWIG_AsVal_unsigned_SS_int(argv[7], &val8);
-  if (!SWIG_IsOK(ecode8)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode8), Ruby_Format_TypeError( "", "unsigned int","ncdirect_light_box", 8, argv[7] ));
-  } 
-  arg8 = (unsigned int)(val8);
-  result = (int)ncdirect_light_box(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_heavy_box(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  uint64_t arg2 ;
-  uint64_t arg3 ;
-  uint64_t arg4 ;
-  uint64_t arg5 ;
-  unsigned int arg6 ;
-  unsigned int arg7 ;
-  unsigned int arg8 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  unsigned long val2 ;
-  int ecode2 = 0 ;
-  unsigned long val3 ;
-  int ecode3 = 0 ;
-  unsigned long val4 ;
-  int ecode4 = 0 ;
-  unsigned long val5 ;
-  int ecode5 = 0 ;
-  unsigned int val6 ;
-  int ecode6 = 0 ;
-  unsigned int val7 ;
-  int ecode7 = 0 ;
-  unsigned int val8 ;
-  int ecode8 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 8) || (argc > 8)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 8)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_heavy_box", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_unsigned_SS_long(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "uint64_t","ncdirect_heavy_box", 2, argv[1] ));
-  } 
-  arg2 = (uint64_t)(val2);
-  ecode3 = SWIG_AsVal_unsigned_SS_long(argv[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "uint64_t","ncdirect_heavy_box", 3, argv[2] ));
-  } 
-  arg3 = (uint64_t)(val3);
-  ecode4 = SWIG_AsVal_unsigned_SS_long(argv[3], &val4);
-  if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "uint64_t","ncdirect_heavy_box", 4, argv[3] ));
-  } 
-  arg4 = (uint64_t)(val4);
-  ecode5 = SWIG_AsVal_unsigned_SS_long(argv[4], &val5);
-  if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "uint64_t","ncdirect_heavy_box", 5, argv[4] ));
-  } 
-  arg5 = (uint64_t)(val5);
-  ecode6 = SWIG_AsVal_unsigned_SS_int(argv[5], &val6);
-  if (!SWIG_IsOK(ecode6)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode6), Ruby_Format_TypeError( "", "unsigned int","ncdirect_heavy_box", 6, argv[5] ));
-  } 
-  arg6 = (unsigned int)(val6);
-  ecode7 = SWIG_AsVal_unsigned_SS_int(argv[6], &val7);
-  if (!SWIG_IsOK(ecode7)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode7), Ruby_Format_TypeError( "", "unsigned int","ncdirect_heavy_box", 7, argv[6] ));
-  } 
-  arg7 = (unsigned int)(val7);
-  ecode8 = SWIG_AsVal_unsigned_SS_int(argv[7], &val8);
-  if (!SWIG_IsOK(ecode8)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode8), Ruby_Format_TypeError( "", "unsigned int","ncdirect_heavy_box", 8, argv[7] ));
-  } 
-  arg8 = (unsigned int)(val8);
-  result = (int)ncdirect_heavy_box(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_ascii_box(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  uint64_t arg2 ;
-  uint64_t arg3 ;
-  uint64_t arg4 ;
-  uint64_t arg5 ;
-  unsigned int arg6 ;
-  unsigned int arg7 ;
-  unsigned int arg8 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  unsigned long val2 ;
-  int ecode2 = 0 ;
-  unsigned long val3 ;
-  int ecode3 = 0 ;
-  unsigned long val4 ;
-  int ecode4 = 0 ;
-  unsigned long val5 ;
-  int ecode5 = 0 ;
-  unsigned int val6 ;
-  int ecode6 = 0 ;
-  unsigned int val7 ;
-  int ecode7 = 0 ;
-  unsigned int val8 ;
-  int ecode8 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 8) || (argc > 8)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 8)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_ascii_box", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_unsigned_SS_long(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "uint64_t","ncdirect_ascii_box", 2, argv[1] ));
-  } 
-  arg2 = (uint64_t)(val2);
-  ecode3 = SWIG_AsVal_unsigned_SS_long(argv[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "uint64_t","ncdirect_ascii_box", 3, argv[2] ));
-  } 
-  arg3 = (uint64_t)(val3);
-  ecode4 = SWIG_AsVal_unsigned_SS_long(argv[3], &val4);
-  if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "uint64_t","ncdirect_ascii_box", 4, argv[3] ));
-  } 
-  arg4 = (uint64_t)(val4);
-  ecode5 = SWIG_AsVal_unsigned_SS_long(argv[4], &val5);
-  if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "uint64_t","ncdirect_ascii_box", 5, argv[4] ));
-  } 
-  arg5 = (uint64_t)(val5);
-  ecode6 = SWIG_AsVal_unsigned_SS_int(argv[5], &val6);
-  if (!SWIG_IsOK(ecode6)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode6), Ruby_Format_TypeError( "", "unsigned int","ncdirect_ascii_box", 6, argv[5] ));
-  } 
-  arg6 = (unsigned int)(val6);
-  ecode7 = SWIG_AsVal_unsigned_SS_int(argv[6], &val7);
-  if (!SWIG_IsOK(ecode7)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode7), Ruby_Format_TypeError( "", "unsigned int","ncdirect_ascii_box", 7, argv[6] ));
-  } 
-  arg7 = (unsigned int)(val7);
-  ecode8 = SWIG_AsVal_unsigned_SS_int(argv[7], &val8);
-  if (!SWIG_IsOK(ecode8)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode8), Ruby_Format_TypeError( "", "unsigned int","ncdirect_ascii_box", 8, argv[7] ));
-  } 
-  arg8 = (unsigned int)(val8);
-  result = (int)ncdirect_ascii_box(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_rounded_box(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  uint64_t arg2 ;
-  uint64_t arg3 ;
-  uint64_t arg4 ;
-  uint64_t arg5 ;
-  unsigned int arg6 ;
-  unsigned int arg7 ;
-  unsigned int arg8 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  unsigned long val2 ;
-  int ecode2 = 0 ;
-  unsigned long val3 ;
-  int ecode3 = 0 ;
-  unsigned long val4 ;
-  int ecode4 = 0 ;
-  unsigned long val5 ;
-  int ecode5 = 0 ;
-  unsigned int val6 ;
-  int ecode6 = 0 ;
-  unsigned int val7 ;
-  int ecode7 = 0 ;
-  unsigned int val8 ;
-  int ecode8 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 8) || (argc > 8)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 8)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_rounded_box", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_unsigned_SS_long(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "uint64_t","ncdirect_rounded_box", 2, argv[1] ));
-  } 
-  arg2 = (uint64_t)(val2);
-  ecode3 = SWIG_AsVal_unsigned_SS_long(argv[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "uint64_t","ncdirect_rounded_box", 3, argv[2] ));
-  } 
-  arg3 = (uint64_t)(val3);
-  ecode4 = SWIG_AsVal_unsigned_SS_long(argv[3], &val4);
-  if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "uint64_t","ncdirect_rounded_box", 4, argv[3] ));
-  } 
-  arg4 = (uint64_t)(val4);
-  ecode5 = SWIG_AsVal_unsigned_SS_long(argv[4], &val5);
-  if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "uint64_t","ncdirect_rounded_box", 5, argv[4] ));
-  } 
-  arg5 = (uint64_t)(val5);
-  ecode6 = SWIG_AsVal_unsigned_SS_int(argv[5], &val6);
-  if (!SWIG_IsOK(ecode6)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode6), Ruby_Format_TypeError( "", "unsigned int","ncdirect_rounded_box", 6, argv[5] ));
-  } 
-  arg6 = (unsigned int)(val6);
-  ecode7 = SWIG_AsVal_unsigned_SS_int(argv[6], &val7);
-  if (!SWIG_IsOK(ecode7)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode7), Ruby_Format_TypeError( "", "unsigned int","ncdirect_rounded_box", 7, argv[6] ));
-  } 
-  arg7 = (unsigned int)(val7);
-  ecode8 = SWIG_AsVal_unsigned_SS_int(argv[7], &val8);
-  if (!SWIG_IsOK(ecode8)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode8), Ruby_Format_TypeError( "", "unsigned int","ncdirect_rounded_box", 8, argv[7] ));
-  } 
-  arg8 = (unsigned int)(val8);
-  result = (int)ncdirect_rounded_box(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_double_box(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  uint64_t arg2 ;
-  uint64_t arg3 ;
-  uint64_t arg4 ;
-  uint64_t arg5 ;
-  unsigned int arg6 ;
-  unsigned int arg7 ;
-  unsigned int arg8 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  unsigned long val2 ;
-  int ecode2 = 0 ;
-  unsigned long val3 ;
-  int ecode3 = 0 ;
-  unsigned long val4 ;
-  int ecode4 = 0 ;
-  unsigned long val5 ;
-  int ecode5 = 0 ;
-  unsigned int val6 ;
-  int ecode6 = 0 ;
-  unsigned int val7 ;
-  int ecode7 = 0 ;
-  unsigned int val8 ;
-  int ecode8 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 8) || (argc > 8)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 8)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_double_box", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  ecode2 = SWIG_AsVal_unsigned_SS_long(argv[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "uint64_t","ncdirect_double_box", 2, argv[1] ));
-  } 
-  arg2 = (uint64_t)(val2);
-  ecode3 = SWIG_AsVal_unsigned_SS_long(argv[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "uint64_t","ncdirect_double_box", 3, argv[2] ));
-  } 
-  arg3 = (uint64_t)(val3);
-  ecode4 = SWIG_AsVal_unsigned_SS_long(argv[3], &val4);
-  if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "uint64_t","ncdirect_double_box", 4, argv[3] ));
-  } 
-  arg4 = (uint64_t)(val4);
-  ecode5 = SWIG_AsVal_unsigned_SS_long(argv[4], &val5);
-  if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "uint64_t","ncdirect_double_box", 5, argv[4] ));
-  } 
-  arg5 = (uint64_t)(val5);
-  ecode6 = SWIG_AsVal_unsigned_SS_int(argv[5], &val6);
-  if (!SWIG_IsOK(ecode6)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode6), Ruby_Format_TypeError( "", "unsigned int","ncdirect_double_box", 6, argv[5] ));
-  } 
-  arg6 = (unsigned int)(val6);
-  ecode7 = SWIG_AsVal_unsigned_SS_int(argv[6], &val7);
-  if (!SWIG_IsOK(ecode7)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode7), Ruby_Format_TypeError( "", "unsigned int","ncdirect_double_box", 7, argv[6] ));
-  } 
-  arg7 = (unsigned int)(val7);
-  ecode8 = SWIG_AsVal_unsigned_SS_int(argv[7], &val8);
-  if (!SWIG_IsOK(ecode8)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode8), Ruby_Format_TypeError( "", "unsigned int","ncdirect_double_box", 8, argv[7] ));
-  } 
-  arg8 = (unsigned int)(val8);
-  result = (int)ncdirect_double_box(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_get(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  struct timespec *arg2 = (struct timespec *) 0 ;
-  ncinput *arg3 = (ncinput *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  void *argp2 = 0 ;
-  int res2 = 0 ;
-  void *argp3 = 0 ;
-  int res3 = 0 ;
-  uint32_t result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 3) || (argc > 3)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 3)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_get", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  res2 = SWIG_ConvertPtr(argv[1], &argp2,SWIGTYPE_p_timespec, 0 |  0 );
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "struct timespec const *","ncdirect_get", 2, argv[1] )); 
-  }
-  arg2 = (struct timespec *)(argp2);
-  res3 = SWIG_ConvertPtr(argv[2], &argp3,SWIGTYPE_p_ncinput, 0 |  0 );
-  if (!SWIG_IsOK(res3)) {
-    SWIG_exception_fail(SWIG_ArgError(res3), Ruby_Format_TypeError( "", "ncinput *","ncdirect_get", 3, argv[2] )); 
-  }
-  arg3 = (ncinput *)(argp3);
-  result = (uint32_t)ncdirect_get(arg1,(struct timespec const *)arg2,arg3);
-  vresult = SWIG_From_unsigned_SS_int((unsigned int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_inputready_fd(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_inputready_fd", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (int)ncdirect_inputready_fd(arg1);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_get_nblock(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  ncinput *arg2 = (ncinput *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  void *argp2 = 0 ;
-  int res2 = 0 ;
-  uint32_t result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 2) || (argc > 2)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_get_nblock", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  res2 = SWIG_ConvertPtr(argv[1], &argp2,SWIGTYPE_p_ncinput, 0 |  0 );
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "ncinput *","ncdirect_get_nblock", 2, argv[1] )); 
-  }
-  arg2 = (ncinput *)(argp2);
-  result = (uint32_t)ncdirect_get_nblock(arg1,arg2);
-  vresult = SWIG_From_unsigned_SS_int((unsigned int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_get_blocking(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  ncinput *arg2 = (ncinput *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  void *argp2 = 0 ;
-  int res2 = 0 ;
-  uint32_t result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 2) || (argc > 2)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_get_blocking", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  res2 = SWIG_ConvertPtr(argv[1], &argp2,SWIGTYPE_p_ncinput, 0 |  0 );
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "ncinput *","ncdirect_get_blocking", 2, argv[1] )); 
-  }
-  arg2 = (ncinput *)(argp2);
-  result = (uint32_t)ncdirect_get_blocking(arg1,arg2);
-  vresult = SWIG_From_unsigned_SS_int((unsigned int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_stop(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_stop", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (int)ncdirect_stop(arg1);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_render_image(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  char *arg2 = (char *) 0 ;
-  ncalign_e arg3 ;
-  ncblitter_e arg4 ;
-  ncscale_e arg5 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
-  int val3 ;
-  int ecode3 = 0 ;
-  int val4 ;
-  int ecode4 = 0 ;
-  int val5 ;
-  int ecode5 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 5) || (argc > 5)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 5)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_render_image", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "char const *","ncdirect_render_image", 2, argv[1] ));
-  }
-  arg2 = (char *)(buf2);
-  ecode3 = SWIG_AsVal_int(argv[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "ncalign_e","ncdirect_render_image", 3, argv[2] ));
-  } 
-  arg3 = (ncalign_e)(val3);
-  ecode4 = SWIG_AsVal_int(argv[3], &val4);
-  if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "ncblitter_e","ncdirect_render_image", 4, argv[3] ));
-  } 
-  arg4 = (ncblitter_e)(val4);
-  ecode5 = SWIG_AsVal_int(argv[4], &val5);
-  if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "ncscale_e","ncdirect_render_image", 5, argv[4] ));
-  } 
-  arg5 = (ncscale_e)(val5);
-  result = (int)ncdirect_render_image(arg1,(char const *)arg2,arg3,arg4,arg5);
-  vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
-  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
-fail:
-  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_render_frame(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  char *arg2 = (char *) 0 ;
-  ncblitter_e arg3 ;
-  ncscale_e arg4 ;
-  int arg5 ;
-  int arg6 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
-  int val3 ;
-  int ecode3 = 0 ;
-  int val4 ;
-  int ecode4 = 0 ;
-  int val5 ;
-  int ecode5 = 0 ;
-  int val6 ;
-  int ecode6 = 0 ;
-  ncdirectv *result = 0 ;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 6) || (argc > 6)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 6)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_render_frame", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "char const *","ncdirect_render_frame", 2, argv[1] ));
-  }
-  arg2 = (char *)(buf2);
-  ecode3 = SWIG_AsVal_int(argv[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "ncblitter_e","ncdirect_render_frame", 3, argv[2] ));
-  } 
-  arg3 = (ncblitter_e)(val3);
-  ecode4 = SWIG_AsVal_int(argv[3], &val4);
-  if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "ncscale_e","ncdirect_render_frame", 4, argv[3] ));
-  } 
-  arg4 = (ncscale_e)(val4);
-  ecode5 = SWIG_AsVal_int(argv[4], &val5);
-  if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "int","ncdirect_render_frame", 5, argv[4] ));
-  } 
-  arg5 = (int)(val5);
-  ecode6 = SWIG_AsVal_int(argv[5], &val6);
-  if (!SWIG_IsOK(ecode6)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode6), Ruby_Format_TypeError( "", "int","ncdirect_render_frame", 6, argv[5] ));
-  } 
-  arg6 = (int)(val6);
-  result = (ncdirectv *)ncdirect_render_frame(arg1,(char const *)arg2,arg3,arg4,arg5,arg6);
-  vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ncplane, 0 |  0 );
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
-  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
-fail:
-  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_raster_frame(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  ncdirectv *arg2 = (ncdirectv *) 0 ;
-  ncalign_e arg3 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  void *argp2 = 0 ;
-  int res2 = 0 ;
-  int val3 ;
-  int ecode3 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 3) || (argc > 3)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 3)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_raster_frame", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  res2 = SWIG_ConvertPtr(argv[1], &argp2,SWIGTYPE_p_ncplane, 0 |  0 );
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "ncdirectv *","ncdirect_raster_frame", 2, argv[1] )); 
-  }
-  arg2 = (ncdirectv *)(argp2);
-  ecode3 = SWIG_AsVal_int(argv[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "ncalign_e","ncdirect_raster_frame", 3, argv[2] ));
-  } 
-  arg3 = (ncalign_e)(val3);
-  result = (int)ncdirect_raster_frame(arg1,arg2,arg3);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirectf_from_file(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  char *arg2 = (char *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
-  ncdirectf *result = 0 ;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 2) || (argc > 2)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirectf_from_file", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "char const *","ncdirectf_from_file", 2, argv[1] ));
-  }
-  arg2 = (char *)(buf2);
-  result = (ncdirectf *)ncdirectf_from_file(arg1,(char const *)arg2);
-  vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ncvisual, 0 |  0 );
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
-  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
-fail:
-  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirectf_free(int argc, VALUE *argv, VALUE self) {
-  ncdirectf *arg1 = (ncdirectf *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncvisual, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "ncdirectf *","ncdirectf_free", 1, argv[0] )); 
-  }
-  arg1 = (ncdirectf *)(argp1);
-  ncdirectf_free(arg1);
-  return Qnil;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirectf_render(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  ncdirectf *arg2 = (ncdirectf *) 0 ;
-  struct ncvisual_options *arg3 = (struct ncvisual_options *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  void *argp2 = 0 ;
-  int res2 = 0 ;
-  void *argp3 = 0 ;
-  int res3 = 0 ;
-  ncdirectv *result = 0 ;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 3) || (argc > 3)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 3)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirectf_render", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  res2 = SWIG_ConvertPtr(argv[1], &argp2,SWIGTYPE_p_ncvisual, 0 |  0 );
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "ncdirectf *","ncdirectf_render", 2, argv[1] )); 
-  }
-  arg2 = (ncdirectf *)(argp2);
-  res3 = SWIG_ConvertPtr(argv[2], &argp3,SWIGTYPE_p_ncvisual_options, 0 |  0 );
-  if (!SWIG_IsOK(res3)) {
-    SWIG_exception_fail(SWIG_ArgError(res3), Ruby_Format_TypeError( "", "struct ncvisual_options const *","ncdirectf_render", 3, argv[2] )); 
-  }
-  arg3 = (struct ncvisual_options *)(argp3);
-  result = (ncdirectv *)ncdirectf_render(arg1,arg2,(struct ncvisual_options const *)arg3);
-  vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ncplane, 0 |  0 );
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirectf_geom(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  ncdirectf *arg2 = (ncdirectf *) 0 ;
-  struct ncvisual_options *arg3 = (struct ncvisual_options *) 0 ;
-  ncvgeom *arg4 = (ncvgeom *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  void *argp2 = 0 ;
-  int res2 = 0 ;
-  void *argp3 = 0 ;
-  int res3 = 0 ;
-  void *argp4 = 0 ;
-  int res4 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 4) || (argc > 4)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 4)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirectf_geom", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  res2 = SWIG_ConvertPtr(argv[1], &argp2,SWIGTYPE_p_ncvisual, 0 |  0 );
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "ncdirectf *","ncdirectf_geom", 2, argv[1] )); 
-  }
-  arg2 = (ncdirectf *)(argp2);
-  res3 = SWIG_ConvertPtr(argv[2], &argp3,SWIGTYPE_p_ncvisual_options, 0 |  0 );
-  if (!SWIG_IsOK(res3)) {
-    SWIG_exception_fail(SWIG_ArgError(res3), Ruby_Format_TypeError( "", "struct ncvisual_options const *","ncdirectf_geom", 3, argv[2] )); 
-  }
-  arg3 = (struct ncvisual_options *)(argp3);
-  res4 = SWIG_ConvertPtr(argv[3], &argp4,SWIGTYPE_p_ncvgeom, 0 |  0 );
-  if (!SWIG_IsOK(res4)) {
-    SWIG_exception_fail(SWIG_ArgError(res4), Ruby_Format_TypeError( "", "ncvgeom *","ncdirectf_geom", 4, argv[3] )); 
-  }
-  arg4 = (ncvgeom *)(argp4);
-  result = (int)ncdirectf_geom(arg1,arg2,(struct ncvisual_options const *)arg3,arg4);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_stream(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  char *arg2 = (char *) 0 ;
-  ncstreamcb arg3 = (ncstreamcb) 0 ;
-  struct ncvisual_options *arg4 = (struct ncvisual_options *) 0 ;
-  void *arg5 = (void *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
-  void *argp4 = 0 ;
-  int res4 = 0 ;
-  int res5 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 5) || (argc > 5)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 5)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_stream", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "char const *","ncdirect_stream", 2, argv[1] ));
-  }
-  arg2 = (char *)(buf2);
-  {
-    int res = SWIG_ConvertFunctionPtr(argv[2], (void**)(&arg3), SWIGTYPE_p_f_p_struct_ncvisual_p_struct_ncvisual_options_p_q_const__struct_timespec_p_void__int);
-    if (!SWIG_IsOK(res)) {
-      SWIG_exception_fail(SWIG_ArgError(res), Ruby_Format_TypeError( "", "ncstreamcb","ncdirect_stream", 3, argv[2] )); 
-    }
-  }
-  res4 = SWIG_ConvertPtr(argv[3], &argp4,SWIGTYPE_p_ncvisual_options, 0 |  0 );
-  if (!SWIG_IsOK(res4)) {
-    SWIG_exception_fail(SWIG_ArgError(res4), Ruby_Format_TypeError( "", "struct ncvisual_options *","ncdirect_stream", 4, argv[3] )); 
-  }
-  arg4 = (struct ncvisual_options *)(argp4);
-  res5 = SWIG_ConvertPtr(argv[4],SWIG_as_voidptrptr(&arg5), 0, 0);
-  if (!SWIG_IsOK(res5)) {
-    SWIG_exception_fail(SWIG_ArgError(res5), Ruby_Format_TypeError( "", "void *","ncdirect_stream", 5, argv[4] )); 
-  }
-  result = (int)ncdirect_stream(arg1,(char const *)arg2,arg3,arg4,arg5);
-  vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
-  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
-fail:
-  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_detected_terminal(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  char *result = 0 ;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_detected_terminal", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (char *)ncdirect_detected_terminal((struct ncdirect const *)arg1);
-  vresult = SWIG_FromCharPtr((const char *)result);
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_cantruecolor(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  bool result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_cantruecolor", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (bool)ncdirect_cantruecolor((struct ncdirect const *)arg1);
-  vresult = SWIG_From_bool((bool)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_canchangecolor(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  bool result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_canchangecolor", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (bool)ncdirect_canchangecolor((struct ncdirect const *)arg1);
-  vresult = SWIG_From_bool((bool)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_canfade(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  bool result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_canfade", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (bool)ncdirect_canfade((struct ncdirect const *)arg1);
-  vresult = SWIG_From_bool((bool)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_canopen_images(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  bool result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_canopen_images", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (bool)ncdirect_canopen_images((struct ncdirect const *)arg1);
-  vresult = SWIG_From_bool((bool)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_canopen_videos(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  bool result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_canopen_videos", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (bool)ncdirect_canopen_videos((struct ncdirect const *)arg1);
-  vresult = SWIG_From_bool((bool)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_canutf8(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  bool result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_canutf8", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (bool)ncdirect_canutf8((struct ncdirect const *)arg1);
-  vresult = SWIG_From_bool((bool)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_check_pixel_support(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_check_pixel_support", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (int)ncdirect_check_pixel_support((struct ncdirect const *)arg1);
-  vresult = SWIG_From_int((int)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_canhalfblock(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  bool result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_canhalfblock", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (bool)ncdirect_canhalfblock((struct ncdirect const *)arg1);
-  vresult = SWIG_From_bool((bool)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_canquadrant(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  bool result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_canquadrant", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (bool)ncdirect_canquadrant((struct ncdirect const *)arg1);
-  vresult = SWIG_From_bool((bool)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_cansextant(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  bool result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_cansextant", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (bool)ncdirect_cansextant((struct ncdirect const *)arg1);
-  vresult = SWIG_From_bool((bool)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_canbraille(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  bool result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_canbraille", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (bool)ncdirect_canbraille((struct ncdirect const *)arg1);
-  vresult = SWIG_From_bool((bool)(result));
-  return vresult;
-fail:
-  return Qnil;
-}
-
-
-SWIGINTERN VALUE
-_wrap_ncdirect_canget_cursor(int argc, VALUE *argv, VALUE self) {
-  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  bool result;
-  VALUE vresult = Qnil;
-  
-  if ((argc < 1) || (argc > 1)) {
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
-  }
-  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_canget_cursor", 1, argv[0] )); 
-  }
-  arg1 = (struct ncdirect *)(argp1);
-  result = (bool)ncdirect_canget_cursor((struct ncdirect const *)arg1);
   vresult = SWIG_From_bool((bool)(result));
   return vresult;
 fail:
@@ -36444,6 +33993,2659 @@ fail:
 
 
 SWIGINTERN VALUE
+_wrap_ncdirect_init(int argc, VALUE *argv, VALUE self) {
+  char *arg1 = (char *) 0 ;
+  FILE *arg2 = (FILE *) 0 ;
+  uint64_t arg3 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  unsigned long val3 ;
+  int ecode3 = 0 ;
+  struct ncdirect *result = 0 ;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 3) || (argc > 3)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 3)",argc); SWIG_fail;
+  }
+  res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "char const *","ncdirect_init", 1, argv[0] ));
+  }
+  arg1 = (char *)(buf1);
+  {
+    if (argv[1] == Qnil) {
+      arg2 = NULL;
+    } else if (rb_respond_to(argv[1], rb_intern("fileno"))) {
+      int fd = NUM2INT(rb_funcall(argv[1], rb_intern("fileno"), 0));
+      const char* mode = get_file_mode(fd);
+      arg2 = fdopen(dup(fd), mode);
+      if (!arg2) {
+        rb_raise(rb_eIOError, "Unable to get FILE* from Ruby IO object");
+      }
+    } else {
+      SWIG_exception(SWIG_TypeError, "Expected IO object or nil");
+    }
+  }
+  ecode3 = SWIG_AsVal_unsigned_SS_long(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "uint64_t","ncdirect_init", 3, argv[2] ));
+  } 
+  arg3 = (uint64_t)(val3);
+  result = (struct ncdirect *)ncdirect_init((char const *)arg1,arg2,arg3);
+  vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ncdirect, 0 |  0 );
+  {
+    if (arg1 != NULL) {
+      vresult = INT2NUM(*arg1);
+    }
+  }
+  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
+  return vresult;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_core_init(int argc, VALUE *argv, VALUE self) {
+  char *arg1 = (char *) 0 ;
+  FILE *arg2 = (FILE *) 0 ;
+  uint64_t arg3 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  unsigned long val3 ;
+  int ecode3 = 0 ;
+  struct ncdirect *result = 0 ;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 3) || (argc > 3)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 3)",argc); SWIG_fail;
+  }
+  res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "char const *","ncdirect_core_init", 1, argv[0] ));
+  }
+  arg1 = (char *)(buf1);
+  {
+    if (argv[1] == Qnil) {
+      arg2 = NULL;
+    } else if (rb_respond_to(argv[1], rb_intern("fileno"))) {
+      int fd = NUM2INT(rb_funcall(argv[1], rb_intern("fileno"), 0));
+      const char* mode = get_file_mode(fd);
+      arg2 = fdopen(dup(fd), mode);
+      if (!arg2) {
+        rb_raise(rb_eIOError, "Unable to get FILE* from Ruby IO object");
+      }
+    } else {
+      SWIG_exception(SWIG_TypeError, "Expected IO object or nil");
+    }
+  }
+  ecode3 = SWIG_AsVal_unsigned_SS_long(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "uint64_t","ncdirect_core_init", 3, argv[2] ));
+  } 
+  arg3 = (uint64_t)(val3);
+  result = (struct ncdirect *)ncdirect_core_init((char const *)arg1,arg2,arg3);
+  vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ncdirect, 0 |  0 );
+  {
+    if (arg1 != NULL) {
+      vresult = INT2NUM(*arg1);
+    }
+  }
+  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
+  return vresult;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_readline(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  char *result = 0 ;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 2) || (argc > 2)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_readline", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "char const *","ncdirect_readline", 2, argv[1] ));
+  }
+  arg2 = (char *)(buf2);
+  result = (char *)ncdirect_readline(arg1,(char const *)arg2);
+  vresult = SWIG_FromCharPtr((const char *)result);
+  {
+    if (arg2 != NULL) {
+      vresult = INT2NUM(*arg2);
+    }
+  }
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return vresult;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_set_fg_rgb(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  unsigned int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned int val2 ;
+  int ecode2 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 2) || (argc > 2)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_set_fg_rgb", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "unsigned int","ncdirect_set_fg_rgb", 2, argv[1] ));
+  } 
+  arg2 = (unsigned int)(val2);
+  result = (int)ncdirect_set_fg_rgb(arg1,arg2);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_set_bg_rgb(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  unsigned int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned int val2 ;
+  int ecode2 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 2) || (argc > 2)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_set_bg_rgb", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "unsigned int","ncdirect_set_bg_rgb", 2, argv[1] ));
+  } 
+  arg2 = (unsigned int)(val2);
+  result = (int)ncdirect_set_bg_rgb(arg1,arg2);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_set_fg_palindex(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 2) || (argc > 2)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_set_fg_palindex", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "int","ncdirect_set_fg_palindex", 2, argv[1] ));
+  } 
+  arg2 = (int)(val2);
+  result = (int)ncdirect_set_fg_palindex(arg1,arg2);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_set_bg_palindex(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 2) || (argc > 2)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_set_bg_palindex", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "int","ncdirect_set_bg_palindex", 2, argv[1] ));
+  } 
+  arg2 = (int)(val2);
+  result = (int)ncdirect_set_bg_palindex(arg1,arg2);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_palette_size(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_palette_size", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (unsigned int)ncdirect_palette_size((struct ncdirect const *)arg1);
+  vresult = SWIG_From_unsigned_SS_int((unsigned int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_putstr(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  uint64_t arg2 ;
+  char *arg3 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned long val2 ;
+  int ecode2 = 0 ;
+  int res3 ;
+  char *buf3 = 0 ;
+  int alloc3 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 3) || (argc > 3)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 3)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_putstr", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_long(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "uint64_t","ncdirect_putstr", 2, argv[1] ));
+  } 
+  arg2 = (uint64_t)(val2);
+  res3 = SWIG_AsCharPtrAndSize(argv[2], &buf3, NULL, &alloc3);
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), Ruby_Format_TypeError( "", "char const *","ncdirect_putstr", 3, argv[2] ));
+  }
+  arg3 = (char *)(buf3);
+  result = (int)ncdirect_putstr(arg1,arg2,(char const *)arg3);
+  vresult = SWIG_From_int((int)(result));
+  {
+    if (arg3 != NULL) {
+      vresult = INT2NUM(*arg3);
+    }
+  }
+  if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
+  return vresult;
+fail:
+  if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_putegc(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  uint64_t arg2 ;
+  char *arg3 = (char *) 0 ;
+  int *arg4 = (int *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned long val2 ;
+  int ecode2 = 0 ;
+  int res3 ;
+  char *buf3 = 0 ;
+  int alloc3 = 0 ;
+  int temp4 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 4) || (argc > 4)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 4)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_putegc", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_long(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "uint64_t","ncdirect_putegc", 2, argv[1] ));
+  } 
+  arg2 = (uint64_t)(val2);
+  res3 = SWIG_AsCharPtrAndSize(argv[2], &buf3, NULL, &alloc3);
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), Ruby_Format_TypeError( "", "char const *","ncdirect_putegc", 3, argv[2] ));
+  }
+  arg3 = (char *)(buf3);
+  {
+    temp4 = NUM2INT(argv[3]);
+    arg4 = &temp4;
+  }
+  result = (int)ncdirect_putegc(arg1,arg2,(char const *)arg3,arg4);
+  vresult = SWIG_From_int((int)(result));
+  {
+    if (arg3 != NULL) {
+      vresult = INT2NUM(*arg3);
+    }
+  }
+  {
+    if (arg4 != NULL) {
+      vresult = INT2NUM(*arg4);
+    }
+  }
+  if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
+  return vresult;
+fail:
+  if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_printf_aligned(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  int arg2 ;
+  ncalign_e arg3 ;
+  char *arg4 = (char *) 0 ;
+  void *arg5 = 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  int res4 ;
+  char *buf4 = 0 ;
+  int alloc4 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if (argc < 4) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 4)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_printf_aligned", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "int","ncdirect_printf_aligned", 2, argv[1] ));
+  } 
+  arg2 = (int)(val2);
+  ecode3 = SWIG_AsVal_int(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "ncalign_e","ncdirect_printf_aligned", 3, argv[2] ));
+  } 
+  arg3 = (ncalign_e)(val3);
+  res4 = SWIG_AsCharPtrAndSize(argv[3], &buf4, NULL, &alloc4);
+  if (!SWIG_IsOK(res4)) {
+    SWIG_exception_fail(SWIG_ArgError(res4), Ruby_Format_TypeError( "", "char const *","ncdirect_printf_aligned", 4, argv[3] ));
+  }
+  arg4 = (char *)(buf4);
+  result = (int)ncdirect_printf_aligned(arg1,arg2,arg3,(char const *)arg4,arg5);
+  vresult = SWIG_From_int((int)(result));
+  {
+    if (arg4 != NULL) {
+      vresult = INT2NUM(*arg4);
+    }
+  }
+  if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
+  return vresult;
+fail:
+  if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_flush(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_flush", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (int)ncdirect_flush((struct ncdirect const *)arg1);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_set_bg_rgb8(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  unsigned int arg2 ;
+  unsigned int arg3 ;
+  unsigned int arg4 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned int val2 ;
+  int ecode2 = 0 ;
+  unsigned int val3 ;
+  int ecode3 = 0 ;
+  unsigned int val4 ;
+  int ecode4 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 4) || (argc > 4)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 4)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_set_bg_rgb8", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "unsigned int","ncdirect_set_bg_rgb8", 2, argv[1] ));
+  } 
+  arg2 = (unsigned int)(val2);
+  ecode3 = SWIG_AsVal_unsigned_SS_int(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "unsigned int","ncdirect_set_bg_rgb8", 3, argv[2] ));
+  } 
+  arg3 = (unsigned int)(val3);
+  ecode4 = SWIG_AsVal_unsigned_SS_int(argv[3], &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "unsigned int","ncdirect_set_bg_rgb8", 4, argv[3] ));
+  } 
+  arg4 = (unsigned int)(val4);
+  result = (int)ncdirect_set_bg_rgb8(arg1,arg2,arg3,arg4);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_set_fg_rgb8(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  unsigned int arg2 ;
+  unsigned int arg3 ;
+  unsigned int arg4 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned int val2 ;
+  int ecode2 = 0 ;
+  unsigned int val3 ;
+  int ecode3 = 0 ;
+  unsigned int val4 ;
+  int ecode4 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 4) || (argc > 4)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 4)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_set_fg_rgb8", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "unsigned int","ncdirect_set_fg_rgb8", 2, argv[1] ));
+  } 
+  arg2 = (unsigned int)(val2);
+  ecode3 = SWIG_AsVal_unsigned_SS_int(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "unsigned int","ncdirect_set_fg_rgb8", 3, argv[2] ));
+  } 
+  arg3 = (unsigned int)(val3);
+  ecode4 = SWIG_AsVal_unsigned_SS_int(argv[3], &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "unsigned int","ncdirect_set_fg_rgb8", 4, argv[3] ));
+  } 
+  arg4 = (unsigned int)(val4);
+  result = (int)ncdirect_set_fg_rgb8(arg1,arg2,arg3,arg4);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_set_fg_default(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_set_fg_default", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (int)ncdirect_set_fg_default(arg1);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_set_bg_default(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_set_bg_default", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (int)ncdirect_set_bg_default(arg1);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_dim_x(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_dim_x", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (unsigned int)ncdirect_dim_x(arg1);
+  vresult = SWIG_From_unsigned_SS_int((unsigned int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_dim_y(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_dim_y", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (unsigned int)ncdirect_dim_y(arg1);
+  vresult = SWIG_From_unsigned_SS_int((unsigned int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_supported_styles(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  uint16_t result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_supported_styles", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (uint16_t)ncdirect_supported_styles((struct ncdirect const *)arg1);
+  vresult = SWIG_From_unsigned_SS_short((unsigned short)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_set_styles(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  unsigned int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned int val2 ;
+  int ecode2 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 2) || (argc > 2)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_set_styles", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "unsigned int","ncdirect_set_styles", 2, argv[1] ));
+  } 
+  arg2 = (unsigned int)(val2);
+  result = (int)ncdirect_set_styles(arg1,arg2);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_on_styles(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  unsigned int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned int val2 ;
+  int ecode2 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 2) || (argc > 2)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_on_styles", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "unsigned int","ncdirect_on_styles", 2, argv[1] ));
+  } 
+  arg2 = (unsigned int)(val2);
+  result = (int)ncdirect_on_styles(arg1,arg2);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_off_styles(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  unsigned int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned int val2 ;
+  int ecode2 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 2) || (argc > 2)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_off_styles", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "unsigned int","ncdirect_off_styles", 2, argv[1] ));
+  } 
+  arg2 = (unsigned int)(val2);
+  result = (int)ncdirect_off_styles(arg1,arg2);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_styles(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  uint16_t result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_styles", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (uint16_t)ncdirect_styles((struct ncdirect const *)arg1);
+  vresult = SWIG_From_unsigned_SS_short((unsigned short)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_cursor_move_yx(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  int arg2 ;
+  int arg3 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 3) || (argc > 3)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 3)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_cursor_move_yx", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "int","ncdirect_cursor_move_yx", 2, argv[1] ));
+  } 
+  arg2 = (int)(val2);
+  ecode3 = SWIG_AsVal_int(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "int","ncdirect_cursor_move_yx", 3, argv[2] ));
+  } 
+  arg3 = (int)(val3);
+  result = (int)ncdirect_cursor_move_yx(arg1,arg2,arg3);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_cursor_enable(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_cursor_enable", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (int)ncdirect_cursor_enable(arg1);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_cursor_disable(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_cursor_disable", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (int)ncdirect_cursor_disable(arg1);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_cursor_up(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 2) || (argc > 2)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_cursor_up", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "int","ncdirect_cursor_up", 2, argv[1] ));
+  } 
+  arg2 = (int)(val2);
+  result = (int)ncdirect_cursor_up(arg1,arg2);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_cursor_left(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 2) || (argc > 2)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_cursor_left", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "int","ncdirect_cursor_left", 2, argv[1] ));
+  } 
+  arg2 = (int)(val2);
+  result = (int)ncdirect_cursor_left(arg1,arg2);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_cursor_right(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 2) || (argc > 2)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_cursor_right", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "int","ncdirect_cursor_right", 2, argv[1] ));
+  } 
+  arg2 = (int)(val2);
+  result = (int)ncdirect_cursor_right(arg1,arg2);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_cursor_down(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 2) || (argc > 2)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_cursor_down", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "int","ncdirect_cursor_down", 2, argv[1] ));
+  } 
+  arg2 = (int)(val2);
+  result = (int)ncdirect_cursor_down(arg1,arg2);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_cursor_yx(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  unsigned int *arg2 = (unsigned int *) 0 ;
+  unsigned int *arg3 = (unsigned int *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned int temp2 ;
+  unsigned int temp3 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 3) || (argc > 3)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 3)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_cursor_yx", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  {
+    temp2 = NUM2UINT(argv[1]);
+    arg2 = &temp2;
+  }
+  {
+    temp3 = NUM2UINT(argv[2]);
+    arg3 = &temp3;
+  }
+  result = (int)ncdirect_cursor_yx(arg1,arg2,arg3);
+  vresult = SWIG_From_int((int)(result));
+  {
+    if (arg2 != NULL) {
+      vresult = INT2NUM(*arg2);
+    }
+  }
+  {
+    if (arg3 != NULL) {
+      vresult = INT2NUM(*arg3);
+    }
+  }
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_cursor_push(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_cursor_push", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (int)ncdirect_cursor_push(arg1);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_cursor_pop(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_cursor_pop", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (int)ncdirect_cursor_pop(arg1);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_clear(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_clear", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (int)ncdirect_clear(arg1);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_capabilities(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  nccapabilities *result = 0 ;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_capabilities", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (nccapabilities *)ncdirect_capabilities((struct ncdirect const *)arg1);
+  vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_nccapabilities, 0 |  0 );
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_hline_interp(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  char *arg2 = (char *) 0 ;
+  unsigned int arg3 ;
+  uint64_t arg4 ;
+  uint64_t arg5 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  unsigned int val3 ;
+  int ecode3 = 0 ;
+  unsigned long val4 ;
+  int ecode4 = 0 ;
+  unsigned long val5 ;
+  int ecode5 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 5) || (argc > 5)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 5)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_hline_interp", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "char const *","ncdirect_hline_interp", 2, argv[1] ));
+  }
+  arg2 = (char *)(buf2);
+  ecode3 = SWIG_AsVal_unsigned_SS_int(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "unsigned int","ncdirect_hline_interp", 3, argv[2] ));
+  } 
+  arg3 = (unsigned int)(val3);
+  ecode4 = SWIG_AsVal_unsigned_SS_long(argv[3], &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "uint64_t","ncdirect_hline_interp", 4, argv[3] ));
+  } 
+  arg4 = (uint64_t)(val4);
+  ecode5 = SWIG_AsVal_unsigned_SS_long(argv[4], &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "uint64_t","ncdirect_hline_interp", 5, argv[4] ));
+  } 
+  arg5 = (uint64_t)(val5);
+  result = (int)ncdirect_hline_interp(arg1,(char const *)arg2,arg3,arg4,arg5);
+  vresult = SWIG_From_int((int)(result));
+  {
+    if (arg2 != NULL) {
+      vresult = INT2NUM(*arg2);
+    }
+  }
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return vresult;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_vline_interp(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  char *arg2 = (char *) 0 ;
+  unsigned int arg3 ;
+  uint64_t arg4 ;
+  uint64_t arg5 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  unsigned int val3 ;
+  int ecode3 = 0 ;
+  unsigned long val4 ;
+  int ecode4 = 0 ;
+  unsigned long val5 ;
+  int ecode5 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 5) || (argc > 5)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 5)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_vline_interp", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "char const *","ncdirect_vline_interp", 2, argv[1] ));
+  }
+  arg2 = (char *)(buf2);
+  ecode3 = SWIG_AsVal_unsigned_SS_int(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "unsigned int","ncdirect_vline_interp", 3, argv[2] ));
+  } 
+  arg3 = (unsigned int)(val3);
+  ecode4 = SWIG_AsVal_unsigned_SS_long(argv[3], &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "uint64_t","ncdirect_vline_interp", 4, argv[3] ));
+  } 
+  arg4 = (uint64_t)(val4);
+  ecode5 = SWIG_AsVal_unsigned_SS_long(argv[4], &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "uint64_t","ncdirect_vline_interp", 5, argv[4] ));
+  } 
+  arg5 = (uint64_t)(val5);
+  result = (int)ncdirect_vline_interp(arg1,(char const *)arg2,arg3,arg4,arg5);
+  vresult = SWIG_From_int((int)(result));
+  {
+    if (arg2 != NULL) {
+      vresult = INT2NUM(*arg2);
+    }
+  }
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return vresult;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_box(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  uint64_t arg2 ;
+  uint64_t arg3 ;
+  uint64_t arg4 ;
+  uint64_t arg5 ;
+  wchar_t *arg6 = (wchar_t *) 0 ;
+  unsigned int arg7 ;
+  unsigned int arg8 ;
+  unsigned int arg9 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned long val2 ;
+  int ecode2 = 0 ;
+  unsigned long val3 ;
+  int ecode3 = 0 ;
+  unsigned long val4 ;
+  int ecode4 = 0 ;
+  unsigned long val5 ;
+  int ecode5 = 0 ;
+  int res6 ;
+  wchar_t *buf6 = 0 ;
+  int alloc6 = 0 ;
+  unsigned int val7 ;
+  int ecode7 = 0 ;
+  unsigned int val8 ;
+  int ecode8 = 0 ;
+  unsigned int val9 ;
+  int ecode9 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 9) || (argc > 9)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 9)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_box", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_long(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "uint64_t","ncdirect_box", 2, argv[1] ));
+  } 
+  arg2 = (uint64_t)(val2);
+  ecode3 = SWIG_AsVal_unsigned_SS_long(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "uint64_t","ncdirect_box", 3, argv[2] ));
+  } 
+  arg3 = (uint64_t)(val3);
+  ecode4 = SWIG_AsVal_unsigned_SS_long(argv[3], &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "uint64_t","ncdirect_box", 4, argv[3] ));
+  } 
+  arg4 = (uint64_t)(val4);
+  ecode5 = SWIG_AsVal_unsigned_SS_long(argv[4], &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "uint64_t","ncdirect_box", 5, argv[4] ));
+  } 
+  arg5 = (uint64_t)(val5);
+  res6 = SWIG_AsWCharPtrAndSize(argv[5], &buf6, NULL, &alloc6);
+  if (!SWIG_IsOK(res6)) {
+    SWIG_exception_fail(SWIG_ArgError(res6), Ruby_Format_TypeError( "", "wchar_t const *","ncdirect_box", 6, argv[5] ));
+  }
+  arg6 = (wchar_t *)(buf6);
+  ecode7 = SWIG_AsVal_unsigned_SS_int(argv[6], &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), Ruby_Format_TypeError( "", "unsigned int","ncdirect_box", 7, argv[6] ));
+  } 
+  arg7 = (unsigned int)(val7);
+  ecode8 = SWIG_AsVal_unsigned_SS_int(argv[7], &val8);
+  if (!SWIG_IsOK(ecode8)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode8), Ruby_Format_TypeError( "", "unsigned int","ncdirect_box", 8, argv[7] ));
+  } 
+  arg8 = (unsigned int)(val8);
+  ecode9 = SWIG_AsVal_unsigned_SS_int(argv[8], &val9);
+  if (!SWIG_IsOK(ecode9)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode9), Ruby_Format_TypeError( "", "unsigned int","ncdirect_box", 9, argv[8] ));
+  } 
+  arg9 = (unsigned int)(val9);
+  result = (int)ncdirect_box(arg1,arg2,arg3,arg4,arg5,(wchar_t const *)arg6,arg7,arg8,arg9);
+  vresult = SWIG_From_int((int)(result));
+  if (alloc6 == SWIG_NEWOBJ) free((char*)buf6);
+  return vresult;
+fail:
+  if (alloc6 == SWIG_NEWOBJ) free((char*)buf6);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_light_box(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  uint64_t arg2 ;
+  uint64_t arg3 ;
+  uint64_t arg4 ;
+  uint64_t arg5 ;
+  unsigned int arg6 ;
+  unsigned int arg7 ;
+  unsigned int arg8 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned long val2 ;
+  int ecode2 = 0 ;
+  unsigned long val3 ;
+  int ecode3 = 0 ;
+  unsigned long val4 ;
+  int ecode4 = 0 ;
+  unsigned long val5 ;
+  int ecode5 = 0 ;
+  unsigned int val6 ;
+  int ecode6 = 0 ;
+  unsigned int val7 ;
+  int ecode7 = 0 ;
+  unsigned int val8 ;
+  int ecode8 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 8) || (argc > 8)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 8)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_light_box", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_long(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "uint64_t","ncdirect_light_box", 2, argv[1] ));
+  } 
+  arg2 = (uint64_t)(val2);
+  ecode3 = SWIG_AsVal_unsigned_SS_long(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "uint64_t","ncdirect_light_box", 3, argv[2] ));
+  } 
+  arg3 = (uint64_t)(val3);
+  ecode4 = SWIG_AsVal_unsigned_SS_long(argv[3], &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "uint64_t","ncdirect_light_box", 4, argv[3] ));
+  } 
+  arg4 = (uint64_t)(val4);
+  ecode5 = SWIG_AsVal_unsigned_SS_long(argv[4], &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "uint64_t","ncdirect_light_box", 5, argv[4] ));
+  } 
+  arg5 = (uint64_t)(val5);
+  ecode6 = SWIG_AsVal_unsigned_SS_int(argv[5], &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), Ruby_Format_TypeError( "", "unsigned int","ncdirect_light_box", 6, argv[5] ));
+  } 
+  arg6 = (unsigned int)(val6);
+  ecode7 = SWIG_AsVal_unsigned_SS_int(argv[6], &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), Ruby_Format_TypeError( "", "unsigned int","ncdirect_light_box", 7, argv[6] ));
+  } 
+  arg7 = (unsigned int)(val7);
+  ecode8 = SWIG_AsVal_unsigned_SS_int(argv[7], &val8);
+  if (!SWIG_IsOK(ecode8)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode8), Ruby_Format_TypeError( "", "unsigned int","ncdirect_light_box", 8, argv[7] ));
+  } 
+  arg8 = (unsigned int)(val8);
+  result = (int)ncdirect_light_box(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_heavy_box(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  uint64_t arg2 ;
+  uint64_t arg3 ;
+  uint64_t arg4 ;
+  uint64_t arg5 ;
+  unsigned int arg6 ;
+  unsigned int arg7 ;
+  unsigned int arg8 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned long val2 ;
+  int ecode2 = 0 ;
+  unsigned long val3 ;
+  int ecode3 = 0 ;
+  unsigned long val4 ;
+  int ecode4 = 0 ;
+  unsigned long val5 ;
+  int ecode5 = 0 ;
+  unsigned int val6 ;
+  int ecode6 = 0 ;
+  unsigned int val7 ;
+  int ecode7 = 0 ;
+  unsigned int val8 ;
+  int ecode8 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 8) || (argc > 8)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 8)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_heavy_box", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_long(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "uint64_t","ncdirect_heavy_box", 2, argv[1] ));
+  } 
+  arg2 = (uint64_t)(val2);
+  ecode3 = SWIG_AsVal_unsigned_SS_long(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "uint64_t","ncdirect_heavy_box", 3, argv[2] ));
+  } 
+  arg3 = (uint64_t)(val3);
+  ecode4 = SWIG_AsVal_unsigned_SS_long(argv[3], &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "uint64_t","ncdirect_heavy_box", 4, argv[3] ));
+  } 
+  arg4 = (uint64_t)(val4);
+  ecode5 = SWIG_AsVal_unsigned_SS_long(argv[4], &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "uint64_t","ncdirect_heavy_box", 5, argv[4] ));
+  } 
+  arg5 = (uint64_t)(val5);
+  ecode6 = SWIG_AsVal_unsigned_SS_int(argv[5], &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), Ruby_Format_TypeError( "", "unsigned int","ncdirect_heavy_box", 6, argv[5] ));
+  } 
+  arg6 = (unsigned int)(val6);
+  ecode7 = SWIG_AsVal_unsigned_SS_int(argv[6], &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), Ruby_Format_TypeError( "", "unsigned int","ncdirect_heavy_box", 7, argv[6] ));
+  } 
+  arg7 = (unsigned int)(val7);
+  ecode8 = SWIG_AsVal_unsigned_SS_int(argv[7], &val8);
+  if (!SWIG_IsOK(ecode8)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode8), Ruby_Format_TypeError( "", "unsigned int","ncdirect_heavy_box", 8, argv[7] ));
+  } 
+  arg8 = (unsigned int)(val8);
+  result = (int)ncdirect_heavy_box(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_ascii_box(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  uint64_t arg2 ;
+  uint64_t arg3 ;
+  uint64_t arg4 ;
+  uint64_t arg5 ;
+  unsigned int arg6 ;
+  unsigned int arg7 ;
+  unsigned int arg8 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned long val2 ;
+  int ecode2 = 0 ;
+  unsigned long val3 ;
+  int ecode3 = 0 ;
+  unsigned long val4 ;
+  int ecode4 = 0 ;
+  unsigned long val5 ;
+  int ecode5 = 0 ;
+  unsigned int val6 ;
+  int ecode6 = 0 ;
+  unsigned int val7 ;
+  int ecode7 = 0 ;
+  unsigned int val8 ;
+  int ecode8 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 8) || (argc > 8)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 8)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_ascii_box", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_long(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "uint64_t","ncdirect_ascii_box", 2, argv[1] ));
+  } 
+  arg2 = (uint64_t)(val2);
+  ecode3 = SWIG_AsVal_unsigned_SS_long(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "uint64_t","ncdirect_ascii_box", 3, argv[2] ));
+  } 
+  arg3 = (uint64_t)(val3);
+  ecode4 = SWIG_AsVal_unsigned_SS_long(argv[3], &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "uint64_t","ncdirect_ascii_box", 4, argv[3] ));
+  } 
+  arg4 = (uint64_t)(val4);
+  ecode5 = SWIG_AsVal_unsigned_SS_long(argv[4], &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "uint64_t","ncdirect_ascii_box", 5, argv[4] ));
+  } 
+  arg5 = (uint64_t)(val5);
+  ecode6 = SWIG_AsVal_unsigned_SS_int(argv[5], &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), Ruby_Format_TypeError( "", "unsigned int","ncdirect_ascii_box", 6, argv[5] ));
+  } 
+  arg6 = (unsigned int)(val6);
+  ecode7 = SWIG_AsVal_unsigned_SS_int(argv[6], &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), Ruby_Format_TypeError( "", "unsigned int","ncdirect_ascii_box", 7, argv[6] ));
+  } 
+  arg7 = (unsigned int)(val7);
+  ecode8 = SWIG_AsVal_unsigned_SS_int(argv[7], &val8);
+  if (!SWIG_IsOK(ecode8)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode8), Ruby_Format_TypeError( "", "unsigned int","ncdirect_ascii_box", 8, argv[7] ));
+  } 
+  arg8 = (unsigned int)(val8);
+  result = (int)ncdirect_ascii_box(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_rounded_box(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  uint64_t arg2 ;
+  uint64_t arg3 ;
+  uint64_t arg4 ;
+  uint64_t arg5 ;
+  unsigned int arg6 ;
+  unsigned int arg7 ;
+  unsigned int arg8 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned long val2 ;
+  int ecode2 = 0 ;
+  unsigned long val3 ;
+  int ecode3 = 0 ;
+  unsigned long val4 ;
+  int ecode4 = 0 ;
+  unsigned long val5 ;
+  int ecode5 = 0 ;
+  unsigned int val6 ;
+  int ecode6 = 0 ;
+  unsigned int val7 ;
+  int ecode7 = 0 ;
+  unsigned int val8 ;
+  int ecode8 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 8) || (argc > 8)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 8)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_rounded_box", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_long(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "uint64_t","ncdirect_rounded_box", 2, argv[1] ));
+  } 
+  arg2 = (uint64_t)(val2);
+  ecode3 = SWIG_AsVal_unsigned_SS_long(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "uint64_t","ncdirect_rounded_box", 3, argv[2] ));
+  } 
+  arg3 = (uint64_t)(val3);
+  ecode4 = SWIG_AsVal_unsigned_SS_long(argv[3], &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "uint64_t","ncdirect_rounded_box", 4, argv[3] ));
+  } 
+  arg4 = (uint64_t)(val4);
+  ecode5 = SWIG_AsVal_unsigned_SS_long(argv[4], &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "uint64_t","ncdirect_rounded_box", 5, argv[4] ));
+  } 
+  arg5 = (uint64_t)(val5);
+  ecode6 = SWIG_AsVal_unsigned_SS_int(argv[5], &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), Ruby_Format_TypeError( "", "unsigned int","ncdirect_rounded_box", 6, argv[5] ));
+  } 
+  arg6 = (unsigned int)(val6);
+  ecode7 = SWIG_AsVal_unsigned_SS_int(argv[6], &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), Ruby_Format_TypeError( "", "unsigned int","ncdirect_rounded_box", 7, argv[6] ));
+  } 
+  arg7 = (unsigned int)(val7);
+  ecode8 = SWIG_AsVal_unsigned_SS_int(argv[7], &val8);
+  if (!SWIG_IsOK(ecode8)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode8), Ruby_Format_TypeError( "", "unsigned int","ncdirect_rounded_box", 8, argv[7] ));
+  } 
+  arg8 = (unsigned int)(val8);
+  result = (int)ncdirect_rounded_box(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_double_box(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  uint64_t arg2 ;
+  uint64_t arg3 ;
+  uint64_t arg4 ;
+  uint64_t arg5 ;
+  unsigned int arg6 ;
+  unsigned int arg7 ;
+  unsigned int arg8 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned long val2 ;
+  int ecode2 = 0 ;
+  unsigned long val3 ;
+  int ecode3 = 0 ;
+  unsigned long val4 ;
+  int ecode4 = 0 ;
+  unsigned long val5 ;
+  int ecode5 = 0 ;
+  unsigned int val6 ;
+  int ecode6 = 0 ;
+  unsigned int val7 ;
+  int ecode7 = 0 ;
+  unsigned int val8 ;
+  int ecode8 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 8) || (argc > 8)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 8)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_double_box", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_long(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "uint64_t","ncdirect_double_box", 2, argv[1] ));
+  } 
+  arg2 = (uint64_t)(val2);
+  ecode3 = SWIG_AsVal_unsigned_SS_long(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "uint64_t","ncdirect_double_box", 3, argv[2] ));
+  } 
+  arg3 = (uint64_t)(val3);
+  ecode4 = SWIG_AsVal_unsigned_SS_long(argv[3], &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "uint64_t","ncdirect_double_box", 4, argv[3] ));
+  } 
+  arg4 = (uint64_t)(val4);
+  ecode5 = SWIG_AsVal_unsigned_SS_long(argv[4], &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "uint64_t","ncdirect_double_box", 5, argv[4] ));
+  } 
+  arg5 = (uint64_t)(val5);
+  ecode6 = SWIG_AsVal_unsigned_SS_int(argv[5], &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), Ruby_Format_TypeError( "", "unsigned int","ncdirect_double_box", 6, argv[5] ));
+  } 
+  arg6 = (unsigned int)(val6);
+  ecode7 = SWIG_AsVal_unsigned_SS_int(argv[6], &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), Ruby_Format_TypeError( "", "unsigned int","ncdirect_double_box", 7, argv[6] ));
+  } 
+  arg7 = (unsigned int)(val7);
+  ecode8 = SWIG_AsVal_unsigned_SS_int(argv[7], &val8);
+  if (!SWIG_IsOK(ecode8)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode8), Ruby_Format_TypeError( "", "unsigned int","ncdirect_double_box", 8, argv[7] ));
+  } 
+  arg8 = (unsigned int)(val8);
+  result = (int)ncdirect_double_box(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_get(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  struct timespec *arg2 = (struct timespec *) 0 ;
+  ncinput *arg3 = (ncinput *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  void *argp3 = 0 ;
+  int res3 = 0 ;
+  uint32_t result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 3) || (argc > 3)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 3)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_get", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  res2 = SWIG_ConvertPtr(argv[1], &argp2,SWIGTYPE_p_timespec, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "struct timespec const *","ncdirect_get", 2, argv[1] )); 
+  }
+  arg2 = (struct timespec *)(argp2);
+  res3 = SWIG_ConvertPtr(argv[2], &argp3,SWIGTYPE_p_ncinput, 0 |  0 );
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), Ruby_Format_TypeError( "", "ncinput *","ncdirect_get", 3, argv[2] )); 
+  }
+  arg3 = (ncinput *)(argp3);
+  result = (uint32_t)ncdirect_get(arg1,(struct timespec const *)arg2,arg3);
+  vresult = SWIG_From_unsigned_SS_int((unsigned int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_inputready_fd(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_inputready_fd", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (int)ncdirect_inputready_fd(arg1);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_get_nblock(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  ncinput *arg2 = (ncinput *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  uint32_t result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 2) || (argc > 2)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_get_nblock", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  res2 = SWIG_ConvertPtr(argv[1], &argp2,SWIGTYPE_p_ncinput, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "ncinput *","ncdirect_get_nblock", 2, argv[1] )); 
+  }
+  arg2 = (ncinput *)(argp2);
+  result = (uint32_t)ncdirect_get_nblock(arg1,arg2);
+  vresult = SWIG_From_unsigned_SS_int((unsigned int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_get_blocking(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  ncinput *arg2 = (ncinput *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  uint32_t result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 2) || (argc > 2)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_get_blocking", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  res2 = SWIG_ConvertPtr(argv[1], &argp2,SWIGTYPE_p_ncinput, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "ncinput *","ncdirect_get_blocking", 2, argv[1] )); 
+  }
+  arg2 = (ncinput *)(argp2);
+  result = (uint32_t)ncdirect_get_blocking(arg1,arg2);
+  vresult = SWIG_From_unsigned_SS_int((unsigned int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_stop(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_stop", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (int)ncdirect_stop(arg1);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_render_image(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  char *arg2 = (char *) 0 ;
+  ncalign_e arg3 ;
+  ncblitter_e arg4 ;
+  ncscale_e arg5 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  int val5 ;
+  int ecode5 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 5) || (argc > 5)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 5)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_render_image", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "char const *","ncdirect_render_image", 2, argv[1] ));
+  }
+  arg2 = (char *)(buf2);
+  ecode3 = SWIG_AsVal_int(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "ncalign_e","ncdirect_render_image", 3, argv[2] ));
+  } 
+  arg3 = (ncalign_e)(val3);
+  ecode4 = SWIG_AsVal_int(argv[3], &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "ncblitter_e","ncdirect_render_image", 4, argv[3] ));
+  } 
+  arg4 = (ncblitter_e)(val4);
+  ecode5 = SWIG_AsVal_int(argv[4], &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "ncscale_e","ncdirect_render_image", 5, argv[4] ));
+  } 
+  arg5 = (ncscale_e)(val5);
+  result = (int)ncdirect_render_image(arg1,(char const *)arg2,arg3,arg4,arg5);
+  vresult = SWIG_From_int((int)(result));
+  {
+    if (arg2 != NULL) {
+      vresult = INT2NUM(*arg2);
+    }
+  }
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return vresult;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_render_frame(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  char *arg2 = (char *) 0 ;
+  ncblitter_e arg3 ;
+  ncscale_e arg4 ;
+  int arg5 ;
+  int arg6 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  int val5 ;
+  int ecode5 = 0 ;
+  int val6 ;
+  int ecode6 = 0 ;
+  ncdirectv *result = 0 ;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 6) || (argc > 6)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 6)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_render_frame", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "char const *","ncdirect_render_frame", 2, argv[1] ));
+  }
+  arg2 = (char *)(buf2);
+  ecode3 = SWIG_AsVal_int(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "ncblitter_e","ncdirect_render_frame", 3, argv[2] ));
+  } 
+  arg3 = (ncblitter_e)(val3);
+  ecode4 = SWIG_AsVal_int(argv[3], &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "ncscale_e","ncdirect_render_frame", 4, argv[3] ));
+  } 
+  arg4 = (ncscale_e)(val4);
+  ecode5 = SWIG_AsVal_int(argv[4], &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), Ruby_Format_TypeError( "", "int","ncdirect_render_frame", 5, argv[4] ));
+  } 
+  arg5 = (int)(val5);
+  ecode6 = SWIG_AsVal_int(argv[5], &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), Ruby_Format_TypeError( "", "int","ncdirect_render_frame", 6, argv[5] ));
+  } 
+  arg6 = (int)(val6);
+  result = (ncdirectv *)ncdirect_render_frame(arg1,(char const *)arg2,arg3,arg4,arg5,arg6);
+  vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ncplane, 0 |  0 );
+  {
+    if (arg2 != NULL) {
+      vresult = INT2NUM(*arg2);
+    }
+  }
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return vresult;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_raster_frame(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  ncdirectv *arg2 = (ncdirectv *) 0 ;
+  ncalign_e arg3 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 3) || (argc > 3)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 3)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_raster_frame", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  res2 = SWIG_ConvertPtr(argv[1], &argp2,SWIGTYPE_p_ncplane, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "ncdirectv *","ncdirect_raster_frame", 2, argv[1] )); 
+  }
+  arg2 = (ncdirectv *)(argp2);
+  ecode3 = SWIG_AsVal_int(argv[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "ncalign_e","ncdirect_raster_frame", 3, argv[2] ));
+  } 
+  arg3 = (ncalign_e)(val3);
+  result = (int)ncdirect_raster_frame(arg1,arg2,arg3);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirectf_from_file(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  ncdirectf *result = 0 ;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 2) || (argc > 2)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirectf_from_file", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "char const *","ncdirectf_from_file", 2, argv[1] ));
+  }
+  arg2 = (char *)(buf2);
+  result = (ncdirectf *)ncdirectf_from_file(arg1,(char const *)arg2);
+  vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ncvisual, 0 |  0 );
+  {
+    if (arg2 != NULL) {
+      vresult = INT2NUM(*arg2);
+    }
+  }
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return vresult;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirectf_free(int argc, VALUE *argv, VALUE self) {
+  ncdirectf *arg1 = (ncdirectf *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncvisual, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "ncdirectf *","ncdirectf_free", 1, argv[0] )); 
+  }
+  arg1 = (ncdirectf *)(argp1);
+  ncdirectf_free(arg1);
+  return Qnil;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirectf_render(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  ncdirectf *arg2 = (ncdirectf *) 0 ;
+  struct ncvisual_options *arg3 = (struct ncvisual_options *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  void *argp3 = 0 ;
+  int res3 = 0 ;
+  ncdirectv *result = 0 ;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 3) || (argc > 3)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 3)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirectf_render", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  res2 = SWIG_ConvertPtr(argv[1], &argp2,SWIGTYPE_p_ncvisual, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "ncdirectf *","ncdirectf_render", 2, argv[1] )); 
+  }
+  arg2 = (ncdirectf *)(argp2);
+  res3 = SWIG_ConvertPtr(argv[2], &argp3,SWIGTYPE_p_ncvisual_options, 0 |  0 );
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), Ruby_Format_TypeError( "", "struct ncvisual_options const *","ncdirectf_render", 3, argv[2] )); 
+  }
+  arg3 = (struct ncvisual_options *)(argp3);
+  result = (ncdirectv *)ncdirectf_render(arg1,arg2,(struct ncvisual_options const *)arg3);
+  vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ncplane, 0 |  0 );
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirectf_geom(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  ncdirectf *arg2 = (ncdirectf *) 0 ;
+  struct ncvisual_options *arg3 = (struct ncvisual_options *) 0 ;
+  ncvgeom *arg4 = (ncvgeom *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  void *argp3 = 0 ;
+  int res3 = 0 ;
+  void *argp4 = 0 ;
+  int res4 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 4) || (argc > 4)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 4)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirectf_geom", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  res2 = SWIG_ConvertPtr(argv[1], &argp2,SWIGTYPE_p_ncvisual, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "ncdirectf *","ncdirectf_geom", 2, argv[1] )); 
+  }
+  arg2 = (ncdirectf *)(argp2);
+  res3 = SWIG_ConvertPtr(argv[2], &argp3,SWIGTYPE_p_ncvisual_options, 0 |  0 );
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), Ruby_Format_TypeError( "", "struct ncvisual_options const *","ncdirectf_geom", 3, argv[2] )); 
+  }
+  arg3 = (struct ncvisual_options *)(argp3);
+  res4 = SWIG_ConvertPtr(argv[3], &argp4,SWIGTYPE_p_ncvgeom, 0 |  0 );
+  if (!SWIG_IsOK(res4)) {
+    SWIG_exception_fail(SWIG_ArgError(res4), Ruby_Format_TypeError( "", "ncvgeom *","ncdirectf_geom", 4, argv[3] )); 
+  }
+  arg4 = (ncvgeom *)(argp4);
+  result = (int)ncdirectf_geom(arg1,arg2,(struct ncvisual_options const *)arg3,arg4);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_stream(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  char *arg2 = (char *) 0 ;
+  ncstreamcb arg3 = (ncstreamcb) 0 ;
+  struct ncvisual_options *arg4 = (struct ncvisual_options *) 0 ;
+  void *arg5 = (void *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  void *argp4 = 0 ;
+  int res4 = 0 ;
+  int res5 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 5) || (argc > 5)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 5)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect *","ncdirect_stream", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), Ruby_Format_TypeError( "", "char const *","ncdirect_stream", 2, argv[1] ));
+  }
+  arg2 = (char *)(buf2);
+  {
+    int res = SWIG_ConvertFunctionPtr(argv[2], (void**)(&arg3), SWIGTYPE_p_f_p_struct_ncvisual_p_struct_ncvisual_options_p_q_const__struct_timespec_p_void__int);
+    if (!SWIG_IsOK(res)) {
+      SWIG_exception_fail(SWIG_ArgError(res), Ruby_Format_TypeError( "", "ncstreamcb","ncdirect_stream", 3, argv[2] )); 
+    }
+  }
+  res4 = SWIG_ConvertPtr(argv[3], &argp4,SWIGTYPE_p_ncvisual_options, 0 |  0 );
+  if (!SWIG_IsOK(res4)) {
+    SWIG_exception_fail(SWIG_ArgError(res4), Ruby_Format_TypeError( "", "struct ncvisual_options *","ncdirect_stream", 4, argv[3] )); 
+  }
+  arg4 = (struct ncvisual_options *)(argp4);
+  res5 = SWIG_ConvertPtr(argv[4],SWIG_as_voidptrptr(&arg5), 0, 0);
+  if (!SWIG_IsOK(res5)) {
+    SWIG_exception_fail(SWIG_ArgError(res5), Ruby_Format_TypeError( "", "void *","ncdirect_stream", 5, argv[4] )); 
+  }
+  result = (int)ncdirect_stream(arg1,(char const *)arg2,arg3,arg4,arg5);
+  vresult = SWIG_From_int((int)(result));
+  {
+    if (arg2 != NULL) {
+      vresult = INT2NUM(*arg2);
+    }
+  }
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return vresult;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_detected_terminal(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  char *result = 0 ;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_detected_terminal", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (char *)ncdirect_detected_terminal((struct ncdirect const *)arg1);
+  vresult = SWIG_FromCharPtr((const char *)result);
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_cantruecolor(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  bool result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_cantruecolor", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (bool)ncdirect_cantruecolor((struct ncdirect const *)arg1);
+  vresult = SWIG_From_bool((bool)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_canchangecolor(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  bool result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_canchangecolor", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (bool)ncdirect_canchangecolor((struct ncdirect const *)arg1);
+  vresult = SWIG_From_bool((bool)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_canfade(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  bool result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_canfade", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (bool)ncdirect_canfade((struct ncdirect const *)arg1);
+  vresult = SWIG_From_bool((bool)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_canopen_images(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  bool result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_canopen_images", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (bool)ncdirect_canopen_images((struct ncdirect const *)arg1);
+  vresult = SWIG_From_bool((bool)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_canopen_videos(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  bool result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_canopen_videos", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (bool)ncdirect_canopen_videos((struct ncdirect const *)arg1);
+  vresult = SWIG_From_bool((bool)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_canutf8(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  bool result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_canutf8", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (bool)ncdirect_canutf8((struct ncdirect const *)arg1);
+  vresult = SWIG_From_bool((bool)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_check_pixel_support(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_check_pixel_support", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (int)ncdirect_check_pixel_support((struct ncdirect const *)arg1);
+  vresult = SWIG_From_int((int)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_canhalfblock(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  bool result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_canhalfblock", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (bool)ncdirect_canhalfblock((struct ncdirect const *)arg1);
+  vresult = SWIG_From_bool((bool)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_canquadrant(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  bool result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_canquadrant", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (bool)ncdirect_canquadrant((struct ncdirect const *)arg1);
+  vresult = SWIG_From_bool((bool)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_cansextant(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  bool result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_cansextant", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (bool)ncdirect_cansextant((struct ncdirect const *)arg1);
+  vresult = SWIG_From_bool((bool)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_canbraille(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  bool result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_canbraille", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (bool)ncdirect_canbraille((struct ncdirect const *)arg1);
+  vresult = SWIG_From_bool((bool)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncdirect_canget_cursor(int argc, VALUE *argv, VALUE self) {
+  struct ncdirect *arg1 = (struct ncdirect *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  bool result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_ncdirect, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "struct ncdirect const *","ncdirect_canget_cursor", 1, argv[0] )); 
+  }
+  arg1 = (struct ncdirect *)(argp1);
+  result = (bool)ncdirect_canget_cursor((struct ncdirect const *)arg1);
+  vresult = SWIG_From_bool((bool)(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
 _wrap_ncplane_vprintf_yx(int argc, VALUE *argv, VALUE self) {
   struct ncplane *arg1 = (struct ncplane *) 0 ;
   int arg2 ;
@@ -36708,7 +36910,7 @@ static swig_type_info _swigt__p_nctree_options = {"_p_nctree_options", "struct n
 static swig_type_info _swigt__p_ncuplot = {"_p_ncuplot", "struct ncuplot *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_ncvgeom = {"_p_ncvgeom", "struct ncvgeom *|ncvgeom *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_ncvisual = {"_p_ncvisual", "ncdirectf *|struct ncvisual *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_ncvisual_options = {"_p_ncvisual_options", "struct ncvisual_options *|ncvisual_options *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_ncvisual_options = {"_p_ncvisual_options", "ncvisual_options *|struct ncvisual_options *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_notcurses = {"_p_notcurses", "struct notcurses *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_notcurses_options = {"_p_notcurses_options", "struct notcurses_options *|notcurses_options *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
@@ -37213,17 +37415,17 @@ SWIGEXPORT void Init_notcurses(void) {
   rb_define_module_function(mNotcurses, "cdata", _wrap_cdata, -1);
   rb_define_module_function(mNotcurses, "memmove", _wrap_memmove, -1);
   
-  SwigClassImaxdiv_t.klass = rb_define_class_under(mNotcurses, "Imaxdiv_t", rb_cObject);
-  SWIG_TypeClientData(SWIGTYPE_p_imaxdiv_t, (void *) &SwigClassImaxdiv_t);
-  rb_define_alloc_func(SwigClassImaxdiv_t.klass, _wrap_imaxdiv_t_allocate);
-  rb_define_method(SwigClassImaxdiv_t.klass, "initialize", _wrap_new_imaxdiv_t, -1);
-  rb_define_method(SwigClassImaxdiv_t.klass, "quot=", _wrap_imaxdiv_t_quot_set, -1);
-  rb_define_method(SwigClassImaxdiv_t.klass, "quot", _wrap_imaxdiv_t_quot_get, -1);
-  rb_define_method(SwigClassImaxdiv_t.klass, "rem=", _wrap_imaxdiv_t_rem_set, -1);
-  rb_define_method(SwigClassImaxdiv_t.klass, "rem", _wrap_imaxdiv_t_rem_get, -1);
-  SwigClassImaxdiv_t.mark = 0;
-  SwigClassImaxdiv_t.destroy = (void (*)(void *)) free_imaxdiv_t;
-  SwigClassImaxdiv_t.trackObjects = 0;
+  SwigClassImaxdivT.klass = rb_define_class_under(mNotcurses, "ImaxdivT", rb_cObject);
+  SWIG_TypeClientData(SWIGTYPE_p_imaxdiv_t, (void *) &SwigClassImaxdivT);
+  rb_define_alloc_func(SwigClassImaxdivT.klass, _wrap_ImaxdivT_allocate);
+  rb_define_method(SwigClassImaxdivT.klass, "initialize", _wrap_new_ImaxdivT, -1);
+  rb_define_method(SwigClassImaxdivT.klass, "quot=", _wrap_ImaxdivT_quot_set, -1);
+  rb_define_method(SwigClassImaxdivT.klass, "quot", _wrap_ImaxdivT_quot_get, -1);
+  rb_define_method(SwigClassImaxdivT.klass, "rem=", _wrap_ImaxdivT_rem_set, -1);
+  rb_define_method(SwigClassImaxdivT.klass, "rem", _wrap_ImaxdivT_rem_get, -1);
+  SwigClassImaxdivT.mark = 0;
+  SwigClassImaxdivT.destroy = (void (*)(void *)) free_imaxdiv_t;
+  SwigClassImaxdivT.trackObjects = 0;
   rb_define_module_function(mNotcurses, "imaxabs", _wrap_imaxabs, -1);
   rb_define_module_function(mNotcurses, "imaxdiv", _wrap_imaxdiv, -1);
   rb_define_module_function(mNotcurses, "strtoimax", _wrap_strtoimax, -1);
@@ -37267,10 +37469,18 @@ SWIGEXPORT void Init_notcurses(void) {
   
   rb_define_module_function(mNotcurses, "ncchannel_initializer", _wrap_ncchannel_initializer, -1);
   rb_define_module_function(mNotcurses, "ncchannels_initializer", _wrap_ncchannels_initializer, -1);
-  rb_define_const(mNotcurses, "LINUX_VERSION_CODE", SWIG_From_int((int)(331678)));
-  rb_define_const(mNotcurses, "LINUX_VERSION_MAJOR", SWIG_From_int((int)(5)));
-  rb_define_const(mNotcurses, "LINUX_VERSION_PATCHLEVEL", SWIG_From_int((int)(15)));
-  rb_define_const(mNotcurses, "LINUX_VERSION_SUBLEVEL", SWIG_From_int((int)(158)));
+  rb_define_module_function(mNotcurses, "ruby_ncplane_vprintf_yx", _wrap_ruby_ncplane_vprintf_yx, -1);
+  rb_define_module_function(mNotcurses, "ruby_ncplane_vprintf_aligned", _wrap_ruby_ncplane_vprintf_aligned, -1);
+  rb_define_module_function(mNotcurses, "ruby_ncplane_vprintf_stained", _wrap_ruby_ncplane_vprintf_stained, -1);
+  rb_define_module_function(mNotcurses, "ruby_ncplane_vprintf", _wrap_ruby_ncplane_vprintf, -1);
+  rb_define_const(mNotcurses, "NOTCURSES_VERNUM_MAJOR", SWIG_From_int((int)(3)));
+  rb_define_const(mNotcurses, "NOTCURSES_VERNUM_MINOR", SWIG_From_int((int)(0)));
+  rb_define_const(mNotcurses, "NOTCURSES_VERNUM_PATCH", SWIG_From_int((int)(6)));
+  rb_define_const(mNotcurses, "NOTCURSES_VERNUM_ORDERED", SWIG_From_int((int)((((3) << 16u) +((0) << 8u) +(6)))));
+  rb_define_const(mNotcurses, "NOTCURSES_VERSION_MAJOR", SWIG_FromCharPtr("3"));
+  rb_define_const(mNotcurses, "NOTCURSES_VERSION_MINOR", SWIG_FromCharPtr("0"));
+  rb_define_const(mNotcurses, "NOTCURSES_VERSION_PATCH", SWIG_FromCharPtr("6"));
+  rb_define_const(mNotcurses, "NOTCURSES_VERSION_TWEAK", SWIG_FromCharPtr(""));
   rb_define_const(mNotcurses, "PRETERUNICODEBASE", SWIG_From_int((int)(1115000)));
   rb_define_const(mNotcurses, "NCKEY_INVALID", SWIG_From_int((int)(((0) +1115000))));
   rb_define_const(mNotcurses, "NCKEY_RESIZE", SWIG_From_int((int)(((1) +1115000))));
@@ -37481,81 +37691,6 @@ SWIGEXPORT void Init_notcurses(void) {
   rb_define_const(mNotcurses, "NCBOXDOUBLE", SWIG_FromCharPtr("\342\225\224\342\225\227\342\225\232\342\225\235\342\225\220\342\225\221"));
   rb_define_const(mNotcurses, "NCBOXASCII", SWIG_FromCharPtr("/\\\\/-|"));
   rb_define_const(mNotcurses, "NCBOXOUTER", SWIG_FromCharPtr("\360\237\255\275\360\237\255\276\360\237\255\274\360\237\255\277\342\226\201\360\237\255\265\360\237\255\266\360\237\255\260"));
-  rb_define_const(mNotcurses, "NCDIRECT_OPTION_INHIBIT_SETLOCALE", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0001ull)));
-  rb_define_const(mNotcurses, "NCDIRECT_OPTION_INHIBIT_CBREAK", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0002ull)));
-  rb_define_const(mNotcurses, "NCDIRECT_OPTION_DRAIN_INPUT", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0004ull)));
-  rb_define_const(mNotcurses, "NCDIRECT_OPTION_NO_QUIT_SIGHANDLERS", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0008ull)));
-  rb_define_const(mNotcurses, "NCDIRECT_OPTION_VERBOSE", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0010ull)));
-  rb_define_const(mNotcurses, "NCDIRECT_OPTION_VERY_VERBOSE", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0020ull)));
-  rb_define_module_function(mNotcurses, "ncdirect_init", _wrap_ncdirect_init, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_core_init", _wrap_ncdirect_core_init, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_readline", _wrap_ncdirect_readline, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_set_fg_rgb", _wrap_ncdirect_set_fg_rgb, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_set_bg_rgb", _wrap_ncdirect_set_bg_rgb, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_set_fg_palindex", _wrap_ncdirect_set_fg_palindex, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_set_bg_palindex", _wrap_ncdirect_set_bg_palindex, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_palette_size", _wrap_ncdirect_palette_size, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_putstr", _wrap_ncdirect_putstr, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_putegc", _wrap_ncdirect_putegc, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_printf_aligned", _wrap_ncdirect_printf_aligned, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_flush", _wrap_ncdirect_flush, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_set_bg_rgb8", _wrap_ncdirect_set_bg_rgb8, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_set_fg_rgb8", _wrap_ncdirect_set_fg_rgb8, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_set_fg_default", _wrap_ncdirect_set_fg_default, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_set_bg_default", _wrap_ncdirect_set_bg_default, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_dim_x", _wrap_ncdirect_dim_x, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_dim_y", _wrap_ncdirect_dim_y, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_supported_styles", _wrap_ncdirect_supported_styles, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_set_styles", _wrap_ncdirect_set_styles, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_on_styles", _wrap_ncdirect_on_styles, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_off_styles", _wrap_ncdirect_off_styles, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_styles", _wrap_ncdirect_styles, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_cursor_move_yx", _wrap_ncdirect_cursor_move_yx, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_cursor_enable", _wrap_ncdirect_cursor_enable, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_cursor_disable", _wrap_ncdirect_cursor_disable, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_cursor_up", _wrap_ncdirect_cursor_up, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_cursor_left", _wrap_ncdirect_cursor_left, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_cursor_right", _wrap_ncdirect_cursor_right, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_cursor_down", _wrap_ncdirect_cursor_down, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_cursor_yx", _wrap_ncdirect_cursor_yx, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_cursor_push", _wrap_ncdirect_cursor_push, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_cursor_pop", _wrap_ncdirect_cursor_pop, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_clear", _wrap_ncdirect_clear, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_capabilities", _wrap_ncdirect_capabilities, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_hline_interp", _wrap_ncdirect_hline_interp, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_vline_interp", _wrap_ncdirect_vline_interp, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_box", _wrap_ncdirect_box, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_light_box", _wrap_ncdirect_light_box, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_heavy_box", _wrap_ncdirect_heavy_box, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_ascii_box", _wrap_ncdirect_ascii_box, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_rounded_box", _wrap_ncdirect_rounded_box, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_double_box", _wrap_ncdirect_double_box, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_get", _wrap_ncdirect_get, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_inputready_fd", _wrap_ncdirect_inputready_fd, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_get_nblock", _wrap_ncdirect_get_nblock, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_get_blocking", _wrap_ncdirect_get_blocking, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_stop", _wrap_ncdirect_stop, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_render_image", _wrap_ncdirect_render_image, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_render_frame", _wrap_ncdirect_render_frame, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_raster_frame", _wrap_ncdirect_raster_frame, -1);
-  rb_define_module_function(mNotcurses, "ncdirectf_from_file", _wrap_ncdirectf_from_file, -1);
-  rb_define_module_function(mNotcurses, "ncdirectf_free", _wrap_ncdirectf_free, -1);
-  rb_define_module_function(mNotcurses, "ncdirectf_render", _wrap_ncdirectf_render, -1);
-  rb_define_module_function(mNotcurses, "ncdirectf_geom", _wrap_ncdirectf_geom, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_stream", _wrap_ncdirect_stream, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_detected_terminal", _wrap_ncdirect_detected_terminal, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_cantruecolor", _wrap_ncdirect_cantruecolor, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_canchangecolor", _wrap_ncdirect_canchangecolor, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_canfade", _wrap_ncdirect_canfade, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_canopen_images", _wrap_ncdirect_canopen_images, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_canopen_videos", _wrap_ncdirect_canopen_videos, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_canutf8", _wrap_ncdirect_canutf8, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_check_pixel_support", _wrap_ncdirect_check_pixel_support, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_canhalfblock", _wrap_ncdirect_canhalfblock, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_canquadrant", _wrap_ncdirect_canquadrant, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_cansextant", _wrap_ncdirect_cansextant, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_canbraille", _wrap_ncdirect_canbraille, -1);
-  rb_define_module_function(mNotcurses, "ncdirect_canget_cursor", _wrap_ncdirect_canget_cursor, -1);
   rb_define_module_function(mNotcurses, "notcurses_version", _wrap_notcurses_version, -1);
   rb_define_module_function(mNotcurses, "notcurses_version_components", _wrap_notcurses_version_components, -1);
   rb_define_const(mNotcurses, "NCBLIT_DEFAULT", SWIG_From_int((int)(NCBLIT_DEFAULT)));
@@ -38776,6 +38911,81 @@ SWIGEXPORT void Init_notcurses(void) {
   rb_define_module_function(mNotcurses, "notcurses_hostname", _wrap_notcurses_hostname, -1);
   rb_define_module_function(mNotcurses, "notcurses_osversion", _wrap_notcurses_osversion, -1);
   rb_define_module_function(mNotcurses, "notcurses_debug", _wrap_notcurses_debug, -1);
+  rb_define_const(mNotcurses, "NCDIRECT_OPTION_INHIBIT_SETLOCALE", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0001ull)));
+  rb_define_const(mNotcurses, "NCDIRECT_OPTION_INHIBIT_CBREAK", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0002ull)));
+  rb_define_const(mNotcurses, "NCDIRECT_OPTION_DRAIN_INPUT", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0004ull)));
+  rb_define_const(mNotcurses, "NCDIRECT_OPTION_NO_QUIT_SIGHANDLERS", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0008ull)));
+  rb_define_const(mNotcurses, "NCDIRECT_OPTION_VERBOSE", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0010ull)));
+  rb_define_const(mNotcurses, "NCDIRECT_OPTION_VERY_VERBOSE", SWIG_From_unsigned_SS_long_SS_long((unsigned long long)(0x0020ull)));
+  rb_define_module_function(mNotcurses, "ncdirect_init", _wrap_ncdirect_init, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_core_init", _wrap_ncdirect_core_init, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_readline", _wrap_ncdirect_readline, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_set_fg_rgb", _wrap_ncdirect_set_fg_rgb, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_set_bg_rgb", _wrap_ncdirect_set_bg_rgb, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_set_fg_palindex", _wrap_ncdirect_set_fg_palindex, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_set_bg_palindex", _wrap_ncdirect_set_bg_palindex, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_palette_size", _wrap_ncdirect_palette_size, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_putstr", _wrap_ncdirect_putstr, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_putegc", _wrap_ncdirect_putegc, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_printf_aligned", _wrap_ncdirect_printf_aligned, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_flush", _wrap_ncdirect_flush, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_set_bg_rgb8", _wrap_ncdirect_set_bg_rgb8, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_set_fg_rgb8", _wrap_ncdirect_set_fg_rgb8, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_set_fg_default", _wrap_ncdirect_set_fg_default, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_set_bg_default", _wrap_ncdirect_set_bg_default, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_dim_x", _wrap_ncdirect_dim_x, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_dim_y", _wrap_ncdirect_dim_y, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_supported_styles", _wrap_ncdirect_supported_styles, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_set_styles", _wrap_ncdirect_set_styles, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_on_styles", _wrap_ncdirect_on_styles, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_off_styles", _wrap_ncdirect_off_styles, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_styles", _wrap_ncdirect_styles, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_cursor_move_yx", _wrap_ncdirect_cursor_move_yx, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_cursor_enable", _wrap_ncdirect_cursor_enable, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_cursor_disable", _wrap_ncdirect_cursor_disable, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_cursor_up", _wrap_ncdirect_cursor_up, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_cursor_left", _wrap_ncdirect_cursor_left, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_cursor_right", _wrap_ncdirect_cursor_right, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_cursor_down", _wrap_ncdirect_cursor_down, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_cursor_yx", _wrap_ncdirect_cursor_yx, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_cursor_push", _wrap_ncdirect_cursor_push, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_cursor_pop", _wrap_ncdirect_cursor_pop, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_clear", _wrap_ncdirect_clear, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_capabilities", _wrap_ncdirect_capabilities, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_hline_interp", _wrap_ncdirect_hline_interp, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_vline_interp", _wrap_ncdirect_vline_interp, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_box", _wrap_ncdirect_box, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_light_box", _wrap_ncdirect_light_box, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_heavy_box", _wrap_ncdirect_heavy_box, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_ascii_box", _wrap_ncdirect_ascii_box, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_rounded_box", _wrap_ncdirect_rounded_box, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_double_box", _wrap_ncdirect_double_box, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_get", _wrap_ncdirect_get, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_inputready_fd", _wrap_ncdirect_inputready_fd, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_get_nblock", _wrap_ncdirect_get_nblock, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_get_blocking", _wrap_ncdirect_get_blocking, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_stop", _wrap_ncdirect_stop, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_render_image", _wrap_ncdirect_render_image, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_render_frame", _wrap_ncdirect_render_frame, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_raster_frame", _wrap_ncdirect_raster_frame, -1);
+  rb_define_module_function(mNotcurses, "ncdirectf_from_file", _wrap_ncdirectf_from_file, -1);
+  rb_define_module_function(mNotcurses, "ncdirectf_free", _wrap_ncdirectf_free, -1);
+  rb_define_module_function(mNotcurses, "ncdirectf_render", _wrap_ncdirectf_render, -1);
+  rb_define_module_function(mNotcurses, "ncdirectf_geom", _wrap_ncdirectf_geom, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_stream", _wrap_ncdirect_stream, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_detected_terminal", _wrap_ncdirect_detected_terminal, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_cantruecolor", _wrap_ncdirect_cantruecolor, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_canchangecolor", _wrap_ncdirect_canchangecolor, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_canfade", _wrap_ncdirect_canfade, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_canopen_images", _wrap_ncdirect_canopen_images, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_canopen_videos", _wrap_ncdirect_canopen_videos, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_canutf8", _wrap_ncdirect_canutf8, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_check_pixel_support", _wrap_ncdirect_check_pixel_support, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_canhalfblock", _wrap_ncdirect_canhalfblock, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_canquadrant", _wrap_ncdirect_canquadrant, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_cansextant", _wrap_ncdirect_cansextant, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_canbraille", _wrap_ncdirect_canbraille, -1);
+  rb_define_module_function(mNotcurses, "ncdirect_canget_cursor", _wrap_ncdirect_canget_cursor, -1);
   rb_define_module_function(mNotcurses, "ncplane_vprintf_yx", _wrap_ncplane_vprintf_yx, -1);
   rb_define_module_function(mNotcurses, "ncplane_vprintf_aligned", _wrap_ncplane_vprintf_aligned, -1);
   rb_define_module_function(mNotcurses, "ncplane_vprintf_stained", _wrap_ncplane_vprintf_stained, -1);
