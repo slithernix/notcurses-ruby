@@ -4,6 +4,10 @@
 // instead of the default Notcurses_options
 %rename("%(camelcase)s", %$isclass) "";
 
+%constant unsigned long NANOSECS_IN_SEC = 1000000000ul;
+%constant const char* PRIu64 = PRIu64;
+%constant const char* PRId64 = PRId64;
+
 // These empty defines are needed because SWIG seems to think compound macros
 // are syntax errors.
 %define __attribute__(x)
@@ -89,7 +93,7 @@ static const char* get_file_mode(int fd) {
 }
 %}
 
-// IO TypeMaps
+// IO
 %typemap(in) FILE* {
   if ($input == Qnil) {
     $1 = NULL;
@@ -219,11 +223,6 @@ static const char* get_file_mode(int fd) {
   $1 = &temp;
 }
 
-%typemap(in) unsigned char* (unsigned char temp) {
-  temp = NUM2CHR($input);
-  $1 = &temp;
-}
-
 %typemap(in) int64_t* (int64_t temp) {
   temp = NUM2LL($input);
   $1 = &temp;
@@ -234,11 +233,12 @@ static const char* get_file_mode(int fd) {
   $1 = &temp;
 }
 
-%typemap(argout) int*, unsigned int*, long*, unsigned long*, short*, unsigned short*, char*, unsigned char*, int64_t*, uint64_t* {
+%typemap(argout) int*, unsigned int*, long*, unsigned long*, short*, unsigned short*, int64_t*, uint64_t* {
   if ($1 != NULL) {
     $result = INT2NUM(*$1);
   }
 }
+
 
 // Stuff in the inline block is both written to the generated C code AND has
 // swig wrappers generated for the functions.
@@ -252,7 +252,7 @@ static const char* get_file_mode(int fd) {
 
 
 // Put fake function macros here.
-// Function equivalent of NCCHANNEL_INITIALIZER macro
+// NCCHANNEL_INITIALIZER
 uint32_t ncchannel_initializer(
   uint32_t r,
   uint32_t g,
@@ -261,7 +261,7 @@ uint32_t ncchannel_initializer(
   return ((r << 16u) + (g << 8u) + b + NC_BGDEFAULT_MASK);
 }
 
-// Function equivalent of NCCHANNELS_INITIALIZER macro
+// NCCHANNELS_INITIALIZER
 uint64_t ncchannels_initializer(
   uint32_t fr,
   uint32_t fg,
@@ -275,6 +275,27 @@ uint64_t ncchannels_initializer(
   uint64_t tmp_bg_chan = ncchannel_initializer(br, bg, bb);
 
   return tmp_fg_chan + tmp_bg_chan;
+}
+
+
+// NCMETRICFWIDTH
+int ncmetricfwidth(const char* x, int cols) {
+  return (int)(strlen(x) - ncstrwidth(x, NULL, NULL) + cols);
+}
+
+// NCPREFIXFMT (note this macro expands to this as well as ", x")
+int ncprefixfmt(const char* x) {
+  return (int)ncmetricfwidth(x, NCPREFIXCOLUMNS);
+}
+
+// NCIPREFIXFMT (note this macro expands to this as well as ", x")
+int nciprefixfmt(const char* x) {
+  return (int)ncmetricfwidth(x, NCIPREFIXCOLUMNS);
+}
+
+// NCBPREFIXFMT (note this macro expands to this as well as ", x")
+int ncbprefixfmt(const char* x) {
+  return (int)ncmetricfwidth(x, NCBPREFIXCOLUMNS);
 }
 
 // Prototypes for functions that replace va_list arg functions, actual
@@ -311,3 +332,4 @@ int ruby_ncplane_vprintf_yx(struct ncplane* n, int y, int x, const char* format,
 int ruby_ncplane_vprintf_aligned(struct ncplane* n, int y, ncalign_e align, const char* format, VALUE rb_args);
 int ruby_ncplane_vprintf_stained(struct ncplane* n, const char* format, VALUE rb_args);
 int ruby_ncplane_vprintf(struct ncplane* n, const char* format, VALUE rb_args);
+

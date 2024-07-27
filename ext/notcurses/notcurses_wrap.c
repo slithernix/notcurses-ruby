@@ -1923,6 +1923,63 @@ static VALUE mNotcurses;
 #define SWIG_as_voidptrptr(a) ((void)SWIG_as_voidptr(*a),(void**)(a)) 
 
 
+#include <limits.h>
+#if !defined(SWIG_NO_LLONG_MAX)
+# if !defined(LLONG_MAX) && defined(__GNUC__) && defined (__LONG_LONG_MAX__)
+#   define LLONG_MAX __LONG_LONG_MAX__
+#   define LLONG_MIN (-LLONG_MAX - 1LL)
+#   define ULLONG_MAX (LLONG_MAX * 2ULL + 1ULL)
+# endif
+#endif
+
+
+  #define SWIG_From_long   LONG2NUM 
+
+
+SWIGINTERNINLINE VALUE
+SWIG_From_unsigned_SS_long  (unsigned long value)
+{
+  return ULONG2NUM(value); 
+}
+
+
+SWIGINTERN swig_type_info*
+SWIG_pchar_descriptor(void)
+{
+  static int init = 0;
+  static swig_type_info* info = 0;
+  if (!init) {
+    info = SWIG_TypeQuery("_p_char");
+    init = 1;
+  }
+  return info;
+}
+
+
+SWIGINTERNINLINE VALUE 
+SWIG_FromCharPtrAndSize(const char* carray, size_t size)
+{
+  if (carray) {
+    if (size > LONG_MAX) {
+      swig_type_info* pchar_descriptor = SWIG_pchar_descriptor();
+      return pchar_descriptor ? 
+	SWIG_NewPointerObj((char *)(carray), pchar_descriptor, 0) : Qnil;
+    } else {
+      return rb_str_new(carray, (long)(size));
+    }
+  } else {
+    return Qnil;
+  }
+}
+
+
+SWIGINTERNINLINE VALUE 
+SWIG_FromCharPtr(const char *cptr)
+{ 
+  return SWIG_FromCharPtrAndSize(cptr, (cptr ? strlen(cptr) : 0));
+}
+
+
 #if defined(__linux__)
 #include <endian.h>
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -2032,16 +2089,6 @@ SWIG_AsVal_unsigned_SS_long (VALUE obj, unsigned long *val)
 }
 
 
-#include <limits.h>
-#if !defined(SWIG_NO_LLONG_MAX)
-# if !defined(LLONG_MAX) && defined(__GNUC__) && defined (__LONG_LONG_MAX__)
-#   define LLONG_MAX __LONG_LONG_MAX__
-#   define LLONG_MIN (-LLONG_MAX - 1LL)
-#   define ULLONG_MAX (LLONG_MAX * 2ULL + 1ULL)
-# endif
-#endif
-
-
 #if defined(LLONG_MAX) && !defined(SWIG_LONG_LONG_AVAILABLE)
 #  define SWIG_LONG_LONG_AVAILABLE
 #endif
@@ -2097,36 +2144,6 @@ SWIG_AsVal_size_t (VALUE obj, size_t *val)
   }
 #endif
   return res;
-}
-
-
-SWIGINTERN swig_type_info*
-SWIG_pchar_descriptor(void)
-{
-  static int init = 0;
-  static swig_type_info* info = 0;
-  if (!init) {
-    info = SWIG_TypeQuery("_p_char");
-    init = 1;
-  }
-  return info;
-}
-
-
-SWIGINTERNINLINE VALUE 
-SWIG_FromCharPtrAndSize(const char* carray, size_t size)
-{
-  if (carray) {
-    if (size > LONG_MAX) {
-      swig_type_info* pchar_descriptor = SWIG_pchar_descriptor();
-      return pchar_descriptor ? 
-	SWIG_NewPointerObj((char *)(carray), pchar_descriptor, 0) : Qnil;
-    } else {
-      return rb_str_new(carray, (long)(size));
-    }
-  } else {
-    return Qnil;
-  }
 }
 
 
@@ -2212,9 +2229,6 @@ SWIG_AsVal_long (VALUE obj, long* val)
 }
 
 
-  #define SWIG_From_long   LONG2NUM 
-
-
 
 
 
@@ -2231,13 +2245,6 @@ SWIG_AsVal_int (VALUE obj, int *val)
     }
   }  
   return res;
-}
-
-
-SWIGINTERNINLINE VALUE
-SWIG_From_unsigned_SS_long  (unsigned long value)
-{
-  return ULONG2NUM(value); 
 }
 
 
@@ -2333,7 +2340,7 @@ static const char* get_file_mode(int fd) {
 
 
 // Put fake function macros here.
-// Function equivalent of NCCHANNEL_INITIALIZER macro
+// NCCHANNEL_INITIALIZER
 uint32_t ncchannel_initializer(
   uint32_t r,
   uint32_t g,
@@ -2342,7 +2349,7 @@ uint32_t ncchannel_initializer(
   return ((r << 16u) + (g << 8u) + b + NC_BGDEFAULT_MASK);
 }
 
-// Function equivalent of NCCHANNELS_INITIALIZER macro
+// NCCHANNELS_INITIALIZER
 uint64_t ncchannels_initializer(
   uint32_t fr,
   uint32_t fg,
@@ -2356,6 +2363,27 @@ uint64_t ncchannels_initializer(
   uint64_t tmp_bg_chan = ncchannel_initializer(br, bg, bb);
 
   return tmp_fg_chan + tmp_bg_chan;
+}
+
+
+// NCMETRICFWIDTH
+int ncmetricfwidth(const char* x, int cols) {
+  return (int)(strlen(x) - ncstrwidth(x, NULL, NULL) + cols);
+}
+
+// NCPREFIXFMT (note this macro expands to this as well as ", x")
+int ncprefixfmt(const char* x) {
+  return (int)ncmetricfwidth(x, NCPREFIXCOLUMNS);
+}
+
+// NCIPREFIXFMT (note this macro expands to this as well as ", x")
+int nciprefixfmt(const char* x) {
+  return (int)ncmetricfwidth(x, NCIPREFIXCOLUMNS);
+}
+
+// NCBPREFIXFMT (note this macro expands to this as well as ", x")
+int ncbprefixfmt(const char* x) {
+  return (int)ncmetricfwidth(x, NCBPREFIXCOLUMNS);
 }
 
 // Prototypes for functions that replace va_list arg functions, actual
@@ -2396,13 +2424,6 @@ SWIGINTERNINLINE VALUE
 SWIG_From_int  (int value)
 {    
   return SWIG_From_long  (value);
-}
-
-
-SWIGINTERNINLINE VALUE 
-SWIG_FromCharPtr(const char *cptr)
-{ 
-  return SWIG_FromCharPtrAndSize(cptr, (cptr ? strlen(cptr) : 0));
 }
 
 
@@ -3667,6 +3688,122 @@ fail:
 
 
 SWIGINTERN VALUE
+_wrap_ncmetricfwidth(int argc, VALUE *argv, VALUE self) {
+  char *arg1 = (char *) 0 ;
+  int arg2 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 2) || (argc > 2)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
+  }
+  res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "char const *","ncmetricfwidth", 1, argv[0] ));
+  }
+  arg1 = (char *)(buf1);
+  ecode2 = SWIG_AsVal_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "int","ncmetricfwidth", 2, argv[1] ));
+  } 
+  arg2 = (int)(val2);
+  result = (int)ncmetricfwidth((char const *)arg1,arg2);
+  vresult = SWIG_From_int((int)(result));
+  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
+  return vresult;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncprefixfmt(int argc, VALUE *argv, VALUE self) {
+  char *arg1 = (char *) 0 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "char const *","ncprefixfmt", 1, argv[0] ));
+  }
+  arg1 = (char *)(buf1);
+  result = (int)ncprefixfmt((char const *)arg1);
+  vresult = SWIG_From_int((int)(result));
+  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
+  return vresult;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_nciprefixfmt(int argc, VALUE *argv, VALUE self) {
+  char *arg1 = (char *) 0 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "char const *","nciprefixfmt", 1, argv[0] ));
+  }
+  arg1 = (char *)(buf1);
+  result = (int)nciprefixfmt((char const *)arg1);
+  vresult = SWIG_From_int((int)(result));
+  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
+  return vresult;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_ncbprefixfmt(int argc, VALUE *argv, VALUE self) {
+  char *arg1 = (char *) 0 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  int result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "char const *","ncbprefixfmt", 1, argv[0] ));
+  }
+  arg1 = (char *)(buf1);
+  result = (int)ncbprefixfmt((char const *)arg1);
+  vresult = SWIG_From_int((int)(result));
+  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
+  return vresult;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
 _wrap_ruby_ncplane_vprintf_yx(int argc, VALUE *argv, VALUE self) {
   struct ncplane *arg1 = (struct ncplane *) 0 ;
   int arg2 ;
@@ -3711,11 +3848,6 @@ _wrap_ruby_ncplane_vprintf_yx(int argc, VALUE *argv, VALUE self) {
   arg5 = argv[4];
   result = (int)ruby_ncplane_vprintf_yx(arg1,arg2,arg3,(char const *)arg4,arg5);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg4 != NULL) {
-      vresult = INT2NUM(*arg4);
-    }
-  }
   if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
   return vresult;
 fail:
@@ -3769,11 +3901,6 @@ _wrap_ruby_ncplane_vprintf_aligned(int argc, VALUE *argv, VALUE self) {
   arg5 = argv[4];
   result = (int)ruby_ncplane_vprintf_aligned(arg1,arg2,arg3,(char const *)arg4,arg5);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg4 != NULL) {
-      vresult = INT2NUM(*arg4);
-    }
-  }
   if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
   return vresult;
 fail:
@@ -3811,11 +3938,6 @@ _wrap_ruby_ncplane_vprintf_stained(int argc, VALUE *argv, VALUE self) {
   arg3 = argv[2];
   result = (int)ruby_ncplane_vprintf_stained(arg1,(char const *)arg2,arg3);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -3853,11 +3975,6 @@ _wrap_ruby_ncplane_vprintf(int argc, VALUE *argv, VALUE self) {
   arg3 = argv[2];
   result = (int)ruby_ncplane_vprintf(arg1,(char const *)arg2,arg3);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -5673,11 +5790,6 @@ _wrap_ncstrwidth(int argc, VALUE *argv, VALUE self) {
   result = (int)ncstrwidth((char const *)arg1,arg2,arg3);
   vresult = SWIG_From_int((int)(result));
   {
-    if (arg1 != NULL) {
-      vresult = INT2NUM(*arg1);
-    }
-  }
-  {
     if (arg2 != NULL) {
       vresult = INT2NUM(*arg2);
     }
@@ -5704,7 +5816,8 @@ _wrap_notcurses_ucs32_to_utf8(int argc, VALUE *argv, VALUE self) {
   unsigned int temp1 ;
   unsigned int val2 ;
   int ecode2 = 0 ;
-  unsigned char temp3 ;
+  void *argp3 = 0 ;
+  int res3 = 0 ;
   size_t val4 ;
   int ecode4 = 0 ;
   int result;
@@ -5722,10 +5835,11 @@ _wrap_notcurses_ucs32_to_utf8(int argc, VALUE *argv, VALUE self) {
     SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "unsigned int","notcurses_ucs32_to_utf8", 2, argv[1] ));
   } 
   arg2 = (unsigned int)(val2);
-  {
-    temp3 = NUM2CHR(argv[2]);
-    arg3 = &temp3;
+  res3 = SWIG_ConvertPtr(argv[2], &argp3,SWIGTYPE_p_unsigned_char, 0 |  0 );
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), Ruby_Format_TypeError( "", "unsigned char *","notcurses_ucs32_to_utf8", 3, argv[2] )); 
   }
+  arg3 = (unsigned char *)(argp3);
   ecode4 = SWIG_AsVal_size_t(argv[3], &val4);
   if (!SWIG_IsOK(ecode4)) {
     SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "size_t","notcurses_ucs32_to_utf8", 4, argv[3] ));
@@ -5736,11 +5850,6 @@ _wrap_notcurses_ucs32_to_utf8(int argc, VALUE *argv, VALUE self) {
   {
     if (arg1 != NULL) {
       vresult = INT2NUM(*arg1);
-    }
-  }
-  {
-    if (arg3 != NULL) {
-      vresult = INT2NUM(*arg3);
     }
   }
   return vresult;
@@ -6108,11 +6217,6 @@ _wrap_nccell_load(int argc, VALUE *argv, VALUE self) {
   arg3 = (char *)(buf3);
   result = (int)nccell_load(arg1,arg2,(char const *)arg3);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg3 != NULL) {
-      vresult = INT2NUM(*arg3);
-    }
-  }
   if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
   return vresult;
 fail:
@@ -6172,11 +6276,6 @@ _wrap_nccell_prime(int argc, VALUE *argv, VALUE self) {
   arg5 = (uint64_t)(val5);
   result = (int)nccell_prime(arg1,arg2,(char const *)arg3,arg4,arg5);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg3 != NULL) {
-      vresult = INT2NUM(*arg3);
-    }
-  }
   if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
   return vresult;
 fail:
@@ -7032,7 +7131,6 @@ _wrap_NotcursesOptions_termtype_set(int argc, VALUE *argv, VALUE self) {
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  VALUE vresult = Qnil;
   
   if ((argc < 1) || (argc > 1)) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
@@ -7053,13 +7151,8 @@ _wrap_NotcursesOptions_termtype_set(int argc, VALUE *argv, VALUE self) {
   } else {
     arg1->termtype = 0;
   }
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
+  return Qnil;
 fail:
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return Qnil;
@@ -7471,11 +7564,6 @@ _wrap_notcurses_lex_margins(int argc, VALUE *argv, VALUE self) {
   arg2 = (notcurses_options *)(argp2);
   result = (int)notcurses_lex_margins((char const *)arg1,arg2);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg1 != NULL) {
-      vresult = INT2NUM(*arg1);
-    }
-  }
   if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
   return vresult;
 fail:
@@ -7511,11 +7599,6 @@ _wrap_notcurses_lex_blitter(int argc, VALUE *argv, VALUE self) {
   arg2 = (ncblitter_e *)(argp2);
   result = (int)notcurses_lex_blitter((char const *)arg1,arg2);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg1 != NULL) {
-      vresult = INT2NUM(*arg1);
-    }
-  }
   if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
   return vresult;
 fail:
@@ -7575,11 +7658,6 @@ _wrap_notcurses_lex_scalemode(int argc, VALUE *argv, VALUE self) {
   arg2 = (ncscale_e *)(argp2);
   result = (int)notcurses_lex_scalemode((char const *)arg1,arg2);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg1 != NULL) {
-      vresult = INT2NUM(*arg1);
-    }
-  }
   if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
   return vresult;
 fail:
@@ -10023,7 +10101,6 @@ _wrap_NcplaneOptions_name_set(int argc, VALUE *argv, VALUE self) {
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  VALUE vresult = Qnil;
   
   if ((argc < 1) || (argc > 1)) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
@@ -10044,13 +10121,8 @@ _wrap_NcplaneOptions_name_set(int argc, VALUE *argv, VALUE self) {
   } else {
     arg1->name = 0;
   }
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
+  return Qnil;
 fail:
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return Qnil;
@@ -10567,11 +10639,6 @@ _wrap_ncplane_set_name(int argc, VALUE *argv, VALUE self) {
   arg2 = (char *)(buf2);
   result = (int)ncplane_set_name(arg1,(char const *)arg2);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -14413,11 +14480,6 @@ _wrap_ncplane_set_base(int argc, VALUE *argv, VALUE self) {
   arg4 = (uint64_t)(val4);
   result = (int)ncplane_set_base(arg1,(char const *)arg2,arg3,arg4);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -16210,11 +16272,6 @@ _wrap_ncplane_putegc_yx(int argc, VALUE *argv, VALUE self) {
   arg5 = (size_t *)(argp5);
   result = (int)ncplane_putegc_yx(arg1,arg2,arg3,(char const *)arg4,arg5);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg4 != NULL) {
-      vresult = INT2NUM(*arg4);
-    }
-  }
   if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
   return vresult;
 fail:
@@ -16258,11 +16315,6 @@ _wrap_ncplane_putegc(int argc, VALUE *argv, VALUE self) {
   arg3 = (size_t *)(argp3);
   result = (int)ncplane_putegc(arg1,(char const *)arg2,arg3);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -16306,11 +16358,6 @@ _wrap_ncplane_putegc_stained(int argc, VALUE *argv, VALUE self) {
   arg3 = (size_t *)(argp3);
   result = (int)ncplane_putegc_stained(arg1,(char const *)arg2,arg3);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -16534,11 +16581,6 @@ _wrap_ncplane_putstr_yx(int argc, VALUE *argv, VALUE self) {
   arg4 = (char *)(buf4);
   result = (int)ncplane_putstr_yx(arg1,arg2,arg3,(char const *)arg4);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg4 != NULL) {
-      vresult = INT2NUM(*arg4);
-    }
-  }
   if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
   return vresult;
 fail:
@@ -16574,11 +16616,6 @@ _wrap_ncplane_putstr(int argc, VALUE *argv, VALUE self) {
   arg2 = (char *)(buf2);
   result = (int)ncplane_putstr(arg1,(char const *)arg2);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -16630,11 +16667,6 @@ _wrap_ncplane_putstr_aligned(int argc, VALUE *argv, VALUE self) {
   arg4 = (char *)(buf4);
   result = (int)ncplane_putstr_aligned(arg1,arg2,arg3,(char const *)arg4);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg4 != NULL) {
-      vresult = INT2NUM(*arg4);
-    }
-  }
   if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
   return vresult;
 fail:
@@ -16670,11 +16702,6 @@ _wrap_ncplane_putstr_stained(int argc, VALUE *argv, VALUE self) {
   arg2 = (char *)(buf2);
   result = (int)ncplane_putstr_stained(arg1,(char const *)arg2);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -16734,11 +16761,6 @@ _wrap_ncplane_putnstr_aligned(int argc, VALUE *argv, VALUE self) {
   arg5 = (char *)(buf5);
   result = (int)ncplane_putnstr_aligned(arg1,arg2,arg3,arg4,(char const *)arg5);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg5 != NULL) {
-      vresult = INT2NUM(*arg5);
-    }
-  }
   if (alloc5 == SWIG_NEWOBJ) free((char*)buf5);
   return vresult;
 fail:
@@ -16798,11 +16820,6 @@ _wrap_ncplane_putnstr_yx(int argc, VALUE *argv, VALUE self) {
   arg5 = (char *)(buf5);
   result = (int)ncplane_putnstr_yx(arg1,arg2,arg3,arg4,(char const *)arg5);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg5 != NULL) {
-      vresult = INT2NUM(*arg5);
-    }
-  }
   if (alloc5 == SWIG_NEWOBJ) free((char*)buf5);
   return vresult;
 fail:
@@ -16846,11 +16863,6 @@ _wrap_ncplane_putnstr(int argc, VALUE *argv, VALUE self) {
   arg3 = (char *)(buf3);
   result = (int)ncplane_putnstr(arg1,arg2,(char const *)arg3);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg3 != NULL) {
-      vresult = INT2NUM(*arg3);
-    }
-  }
   if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
   return vresult;
 fail:
@@ -17265,11 +17277,6 @@ _wrap_ncplane_printf(int argc, VALUE *argv, VALUE self) {
   arg2 = (char *)(buf2);
   result = (int)ncplane_printf(arg1,(char const *)arg2,arg3);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -17322,11 +17329,6 @@ _wrap_ncplane_printf_yx(int argc, VALUE *argv, VALUE self) {
   arg4 = (char *)(buf4);
   result = (int)ncplane_printf_yx(arg1,arg2,arg3,(char const *)arg4,arg5);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg4 != NULL) {
-      vresult = INT2NUM(*arg4);
-    }
-  }
   if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
   return vresult;
 fail:
@@ -17379,11 +17381,6 @@ _wrap_ncplane_printf_aligned(int argc, VALUE *argv, VALUE self) {
   arg4 = (char *)(buf4);
   result = (int)ncplane_printf_aligned(arg1,arg2,arg3,(char const *)arg4,arg5);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg4 != NULL) {
-      vresult = INT2NUM(*arg4);
-    }
-  }
   if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
   return vresult;
 fail:
@@ -17420,11 +17417,6 @@ _wrap_ncplane_printf_stained(int argc, VALUE *argv, VALUE self) {
   arg2 = (char *)(buf2);
   result = (int)ncplane_printf_stained(arg1,(char const *)arg2,arg3);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -17484,11 +17476,6 @@ _wrap_ncplane_puttext(int argc, VALUE *argv, VALUE self) {
   arg5 = (size_t *)(argp5);
   result = (int)ncplane_puttext(arg1,arg2,arg3,(char const *)arg4,arg5);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg4 != NULL) {
-      vresult = INT2NUM(*arg4);
-    }
-  }
   if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
   return vresult;
 fail:
@@ -18108,11 +18095,6 @@ _wrap_ncplane_gradient(int argc, VALUE *argv, VALUE self) {
   arg11 = (uint64_t)(val11);
   result = (int)ncplane_gradient(arg1,arg2,arg3,arg4,arg5,(char const *)arg6,arg7,arg8,arg9,arg10,arg11);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg6 != NULL) {
-      vresult = INT2NUM(*arg6);
-    }
-  }
   if (alloc6 == SWIG_NEWOBJ) free((char*)buf6);
   return vresult;
 fail:
@@ -20525,11 +20507,6 @@ _wrap_nccells_load_box(int argc, VALUE *argv, VALUE self) {
   arg10 = (char *)(buf10);
   result = (int)nccells_load_box(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,(char const *)arg10);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg10 != NULL) {
-      vresult = INT2NUM(*arg10);
-    }
-  }
   if (alloc10 == SWIG_NEWOBJ) free((char*)buf10);
   return vresult;
 fail:
@@ -21413,11 +21390,6 @@ _wrap_ncvisual_from_file(int argc, VALUE *argv, VALUE self) {
   arg1 = (char *)(buf1);
   result = (struct ncvisual *)ncvisual_from_file((char const *)arg1);
   vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ncvisual, 0 |  0 );
-  {
-    if (arg1 != NULL) {
-      vresult = INT2NUM(*arg1);
-    }
-  }
   if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
   return vresult;
 fail:
@@ -21798,11 +21770,6 @@ _wrap_ncvisual_from_sixel(int argc, VALUE *argv, VALUE self) {
   arg3 = (unsigned int)(val3);
   result = (struct ncvisual *)ncvisual_from_sixel((char const *)arg1,arg2,arg3);
   vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ncvisual, 0 |  0 );
-  {
-    if (arg1 != NULL) {
-      vresult = INT2NUM(*arg1);
-    }
-  }
   if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
   return vresult;
 fail:
@@ -25392,11 +25359,6 @@ _wrap_ncnmetric(int argc, VALUE *argv, VALUE self) {
   arg7 = (int)(val7);
   result = (char *)ncnmetric(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
   vresult = SWIG_FromCharPtr((const char *)result);
-  {
-    if (arg4 != NULL) {
-      vresult = INT2NUM(*arg4);
-    }
-  }
   if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
   return vresult;
 fail:
@@ -25448,11 +25410,6 @@ _wrap_ncqprefix(int argc, VALUE *argv, VALUE self) {
   arg4 = (int)(val4);
   result = (char *)ncqprefix(arg1,arg2,arg3,arg4);
   vresult = SWIG_FromCharPtr((const char *)result);
-  {
-    if (arg3 != NULL) {
-      vresult = INT2NUM(*arg3);
-    }
-  }
   if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
   return vresult;
 fail:
@@ -25504,11 +25461,6 @@ _wrap_nciprefix(int argc, VALUE *argv, VALUE self) {
   arg4 = (int)(val4);
   result = (char *)nciprefix(arg1,arg2,arg3,arg4);
   vresult = SWIG_FromCharPtr((const char *)result);
-  {
-    if (arg3 != NULL) {
-      vresult = INT2NUM(*arg3);
-    }
-  }
   if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
   return vresult;
 fail:
@@ -25560,11 +25512,6 @@ _wrap_ncbprefix(int argc, VALUE *argv, VALUE self) {
   arg4 = (int)(val4);
   result = (char *)ncbprefix(arg1,arg2,arg3,arg4);
   vresult = SWIG_FromCharPtr((const char *)result);
-  {
-    if (arg3 != NULL) {
-      vresult = INT2NUM(*arg3);
-    }
-  }
   if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
   return vresult;
 fail:
@@ -25785,7 +25732,6 @@ _wrap_NcselectorItem_option_set(int argc, VALUE *argv, VALUE self) {
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  VALUE vresult = Qnil;
   
   if ((argc < 1) || (argc > 1)) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
@@ -25806,13 +25752,8 @@ _wrap_NcselectorItem_option_set(int argc, VALUE *argv, VALUE self) {
   } else {
     arg1->option = 0;
   }
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
+  return Qnil;
 fail:
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return Qnil;
@@ -25852,7 +25793,6 @@ _wrap_NcselectorItem_desc_set(int argc, VALUE *argv, VALUE self) {
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  VALUE vresult = Qnil;
   
   if ((argc < 1) || (argc > 1)) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
@@ -25873,13 +25813,8 @@ _wrap_NcselectorItem_desc_set(int argc, VALUE *argv, VALUE self) {
   } else {
     arg1->desc = 0;
   }
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
+  return Qnil;
 fail:
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return Qnil;
@@ -25957,7 +25892,6 @@ _wrap_NcselectorOptions_title_set(int argc, VALUE *argv, VALUE self) {
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  VALUE vresult = Qnil;
   
   if ((argc < 1) || (argc > 1)) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
@@ -25978,13 +25912,8 @@ _wrap_NcselectorOptions_title_set(int argc, VALUE *argv, VALUE self) {
   } else {
     arg1->title = 0;
   }
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
+  return Qnil;
 fail:
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return Qnil;
@@ -26024,7 +25953,6 @@ _wrap_NcselectorOptions_secondary_set(int argc, VALUE *argv, VALUE self) {
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  VALUE vresult = Qnil;
   
   if ((argc < 1) || (argc > 1)) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
@@ -26045,13 +25973,8 @@ _wrap_NcselectorOptions_secondary_set(int argc, VALUE *argv, VALUE self) {
   } else {
     arg1->secondary = 0;
   }
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
+  return Qnil;
 fail:
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return Qnil;
@@ -26091,7 +26014,6 @@ _wrap_NcselectorOptions_footer_set(int argc, VALUE *argv, VALUE self) {
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  VALUE vresult = Qnil;
   
   if ((argc < 1) || (argc > 1)) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
@@ -26112,13 +26034,8 @@ _wrap_NcselectorOptions_footer_set(int argc, VALUE *argv, VALUE self) {
   } else {
     arg1->footer = 0;
   }
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
+  return Qnil;
 fail:
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return Qnil;
@@ -26753,11 +26670,6 @@ _wrap_ncselector_delitem(int argc, VALUE *argv, VALUE self) {
   arg2 = (char *)(buf2);
   result = (int)ncselector_delitem(arg1,(char const *)arg2);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -26934,7 +26846,6 @@ _wrap_NcmselectorItem_option_set(int argc, VALUE *argv, VALUE self) {
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  VALUE vresult = Qnil;
   
   if ((argc < 1) || (argc > 1)) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
@@ -26955,13 +26866,8 @@ _wrap_NcmselectorItem_option_set(int argc, VALUE *argv, VALUE self) {
   } else {
     arg1->option = 0;
   }
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
+  return Qnil;
 fail:
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return Qnil;
@@ -27001,7 +26907,6 @@ _wrap_NcmselectorItem_desc_set(int argc, VALUE *argv, VALUE self) {
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  VALUE vresult = Qnil;
   
   if ((argc < 1) || (argc > 1)) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
@@ -27022,13 +26927,8 @@ _wrap_NcmselectorItem_desc_set(int argc, VALUE *argv, VALUE self) {
   } else {
     arg1->desc = 0;
   }
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
+  return Qnil;
 fail:
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return Qnil;
@@ -27159,7 +27059,6 @@ _wrap_NcmultiselectorOptions_title_set(int argc, VALUE *argv, VALUE self) {
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  VALUE vresult = Qnil;
   
   if ((argc < 1) || (argc > 1)) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
@@ -27180,13 +27079,8 @@ _wrap_NcmultiselectorOptions_title_set(int argc, VALUE *argv, VALUE self) {
   } else {
     arg1->title = 0;
   }
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
+  return Qnil;
 fail:
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return Qnil;
@@ -27226,7 +27120,6 @@ _wrap_NcmultiselectorOptions_secondary_set(int argc, VALUE *argv, VALUE self) {
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  VALUE vresult = Qnil;
   
   if ((argc < 1) || (argc > 1)) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
@@ -27247,13 +27140,8 @@ _wrap_NcmultiselectorOptions_secondary_set(int argc, VALUE *argv, VALUE self) {
   } else {
     arg1->secondary = 0;
   }
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
+  return Qnil;
 fail:
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return Qnil;
@@ -27293,7 +27181,6 @@ _wrap_NcmultiselectorOptions_footer_set(int argc, VALUE *argv, VALUE self) {
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  VALUE vresult = Qnil;
   
   if ((argc < 1) || (argc > 1)) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
@@ -27314,13 +27201,8 @@ _wrap_NcmultiselectorOptions_footer_set(int argc, VALUE *argv, VALUE self) {
   } else {
     arg1->footer = 0;
   }
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
+  return Qnil;
 fail:
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return Qnil;
@@ -28797,7 +28679,6 @@ _wrap_NcmenuItem_desc_set(int argc, VALUE *argv, VALUE self) {
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  VALUE vresult = Qnil;
   
   if ((argc < 1) || (argc > 1)) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
@@ -28818,13 +28699,8 @@ _wrap_NcmenuItem_desc_set(int argc, VALUE *argv, VALUE self) {
   } else {
     arg1->desc = 0;
   }
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
+  return Qnil;
 fail:
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return Qnil;
@@ -28955,7 +28831,6 @@ _wrap_NcmenuSection_name_set(int argc, VALUE *argv, VALUE self) {
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  VALUE vresult = Qnil;
   
   if ((argc < 1) || (argc > 1)) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
@@ -28976,13 +28851,8 @@ _wrap_NcmenuSection_name_set(int argc, VALUE *argv, VALUE self) {
   } else {
     arg1->name = 0;
   }
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
+  return Qnil;
 fail:
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return Qnil;
@@ -29739,16 +29609,6 @@ _wrap_ncmenu_item_set_status(int argc, VALUE *argv, VALUE self) {
   arg4 = (bool)(val4);
   result = (int)ncmenu_item_set_status(arg1,(char const *)arg2,(char const *)arg3,arg4);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
-  {
-    if (arg3 != NULL) {
-      vresult = INT2NUM(*arg3);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
   return vresult;
@@ -30514,7 +30374,6 @@ _wrap_NctabbedOptions_separator_set(int argc, VALUE *argv, VALUE self) {
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  VALUE vresult = Qnil;
   
   if ((argc < 1) || (argc > 1)) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
@@ -30535,13 +30394,8 @@ _wrap_NctabbedOptions_separator_set(int argc, VALUE *argv, VALUE self) {
   } else {
     arg1->separator = 0;
   }
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
+  return Qnil;
 fail:
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return Qnil;
@@ -31076,11 +30930,6 @@ _wrap_nctabbed_add(int argc, VALUE *argv, VALUE self) {
   }
   result = (struct nctab *)nctabbed_add(arg1,arg2,arg3,arg4,(char const *)arg5,arg6);
   vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_nctab, 0 |  0 );
-  {
-    if (arg5 != NULL) {
-      vresult = INT2NUM(*arg5);
-    }
-  }
   if (alloc5 == SWIG_NEWOBJ) free((char*)buf5);
   return vresult;
 fail:
@@ -31657,11 +31506,6 @@ _wrap_nctab_set_name(int argc, VALUE *argv, VALUE self) {
   arg2 = (char *)(buf2);
   result = (int)nctab_set_name(arg1,(char const *)arg2);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -31727,11 +31571,6 @@ _wrap_nctabbed_set_separator(int argc, VALUE *argv, VALUE self) {
   arg2 = (char *)(buf2);
   result = (int)nctabbed_set_separator(arg1,(char const *)arg2);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -32016,7 +31855,6 @@ _wrap_NcplotOptions_title_set(int argc, VALUE *argv, VALUE self) {
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  VALUE vresult = Qnil;
   
   if ((argc < 1) || (argc > 1)) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
@@ -32037,13 +31875,8 @@ _wrap_NcplotOptions_title_set(int argc, VALUE *argv, VALUE self) {
   } else {
     arg1->title = 0;
   }
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  return vresult;
+  return Qnil;
 fail:
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return Qnil;
@@ -33141,11 +32974,6 @@ _wrap_ncsubproc_createv(int argc, VALUE *argv, VALUE self) {
   }
   result = (struct ncsubproc *)ncsubproc_createv(arg1,(struct ncsubproc_options const *)arg2,(char const *)arg3,(char const *const (*))arg4,arg5,arg6);
   vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ncsubproc, 0 |  0 );
-  {
-    if (arg3 != NULL) {
-      vresult = INT2NUM(*arg3);
-    }
-  }
   if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
   return vresult;
 fail:
@@ -33211,11 +33039,6 @@ _wrap_ncsubproc_createvp(int argc, VALUE *argv, VALUE self) {
   }
   result = (struct ncsubproc *)ncsubproc_createvp(arg1,(struct ncsubproc_options const *)arg2,(char const *)arg3,(char const *const (*))arg4,arg5,arg6);
   vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ncsubproc, 0 |  0 );
-  {
-    if (arg3 != NULL) {
-      vresult = INT2NUM(*arg3);
-    }
-  }
   if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
   return vresult;
 fail:
@@ -33289,11 +33112,6 @@ _wrap_ncsubproc_createvpe(int argc, VALUE *argv, VALUE self) {
   }
   result = (struct ncsubproc *)ncsubproc_createvpe(arg1,(struct ncsubproc_options const *)arg2,(char const *)arg3,(char const *const (*))arg4,(char const *const (*))arg5,arg6,arg7);
   vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ncsubproc, 0 |  0 );
-  {
-    if (arg3 != NULL) {
-      vresult = INT2NUM(*arg3);
-    }
-  }
   if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
   return vresult;
 fail:
@@ -33842,11 +33660,6 @@ _wrap_ncreader_write_egc(int argc, VALUE *argv, VALUE self) {
   arg2 = (char *)(buf2);
   result = (int)ncreader_write_egc(arg1,(char const *)arg2);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -34034,11 +33847,6 @@ _wrap_ncdirect_init(int argc, VALUE *argv, VALUE self) {
   arg3 = (uint64_t)(val3);
   result = (struct ncdirect *)ncdirect_init((char const *)arg1,arg2,arg3);
   vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ncdirect, 0 |  0 );
-  {
-    if (arg1 != NULL) {
-      vresult = INT2NUM(*arg1);
-    }
-  }
   if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
   return vresult;
 fail:
@@ -34089,11 +33897,6 @@ _wrap_ncdirect_core_init(int argc, VALUE *argv, VALUE self) {
   arg3 = (uint64_t)(val3);
   result = (struct ncdirect *)ncdirect_core_init((char const *)arg1,arg2,arg3);
   vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ncdirect, 0 |  0 );
-  {
-    if (arg1 != NULL) {
-      vresult = INT2NUM(*arg1);
-    }
-  }
   if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
   return vresult;
 fail:
@@ -34129,11 +33932,6 @@ _wrap_ncdirect_readline(int argc, VALUE *argv, VALUE self) {
   arg2 = (char *)(buf2);
   result = (char *)ncdirect_readline(arg1,(char const *)arg2);
   vresult = SWIG_FromCharPtr((const char *)result);
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -34329,11 +34127,6 @@ _wrap_ncdirect_putstr(int argc, VALUE *argv, VALUE self) {
   arg3 = (char *)(buf3);
   result = (int)ncdirect_putstr(arg1,arg2,(char const *)arg3);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg3 != NULL) {
-      vresult = INT2NUM(*arg3);
-    }
-  }
   if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
   return vresult;
 fail:
@@ -34383,11 +34176,6 @@ _wrap_ncdirect_putegc(int argc, VALUE *argv, VALUE self) {
   }
   result = (int)ncdirect_putegc(arg1,arg2,(char const *)arg3,arg4);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg3 != NULL) {
-      vresult = INT2NUM(*arg3);
-    }
-  }
   {
     if (arg4 != NULL) {
       vresult = INT2NUM(*arg4);
@@ -34445,11 +34233,6 @@ _wrap_ncdirect_printf_aligned(int argc, VALUE *argv, VALUE self) {
   arg4 = (char *)(buf4);
   result = (int)ncdirect_printf_aligned(arg1,arg2,arg3,(char const *)arg4,arg5);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg4 != NULL) {
-      vresult = INT2NUM(*arg4);
-    }
-  }
   if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
   return vresult;
 fail:
@@ -35227,11 +35010,6 @@ _wrap_ncdirect_hline_interp(int argc, VALUE *argv, VALUE self) {
   arg5 = (uint64_t)(val5);
   result = (int)ncdirect_hline_interp(arg1,(char const *)arg2,arg3,arg4,arg5);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -35291,11 +35069,6 @@ _wrap_ncdirect_vline_interp(int argc, VALUE *argv, VALUE self) {
   arg5 = (uint64_t)(val5);
   result = (int)ncdirect_vline_interp(arg1,(char const *)arg2,arg3,arg4,arg5);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -35998,11 +35771,6 @@ _wrap_ncdirect_render_image(int argc, VALUE *argv, VALUE self) {
   arg5 = (ncscale_e)(val5);
   result = (int)ncdirect_render_image(arg1,(char const *)arg2,arg3,arg4,arg5);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -36070,11 +35838,6 @@ _wrap_ncdirect_render_frame(int argc, VALUE *argv, VALUE self) {
   arg6 = (int)(val6);
   result = (ncdirectv *)ncdirect_render_frame(arg1,(char const *)arg2,arg3,arg4,arg5,arg6);
   vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ncplane, 0 |  0 );
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -36150,11 +35913,6 @@ _wrap_ncdirectf_from_file(int argc, VALUE *argv, VALUE self) {
   arg2 = (char *)(buf2);
   result = (ncdirectf *)ncdirectf_from_file(arg1,(char const *)arg2);
   vresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ncvisual, 0 |  0 );
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -36320,11 +36078,6 @@ _wrap_ncdirect_stream(int argc, VALUE *argv, VALUE self) {
   }
   result = (int)ncdirect_stream(arg1,(char const *)arg2,arg3,arg4,arg5);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -36690,11 +36443,6 @@ _wrap_ncplane_vprintf_yx(int argc, VALUE *argv, VALUE self) {
   arg5 = argv[4];
   result = (int)ruby_ncplane_vprintf_yx(arg1,arg2,arg3,(char const *)arg4,arg5);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg4 != NULL) {
-      vresult = INT2NUM(*arg4);
-    }
-  }
   if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
   return vresult;
 fail:
@@ -36748,11 +36496,6 @@ _wrap_ncplane_vprintf_aligned(int argc, VALUE *argv, VALUE self) {
   arg5 = argv[4];
   result = (int)ruby_ncplane_vprintf_aligned(arg1,arg2,arg3,(char const *)arg4,arg5);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg4 != NULL) {
-      vresult = INT2NUM(*arg4);
-    }
-  }
   if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
   return vresult;
 fail:
@@ -36790,11 +36533,6 @@ _wrap_ncplane_vprintf_stained(int argc, VALUE *argv, VALUE self) {
   arg3 = argv[2];
   result = (int)ruby_ncplane_vprintf_stained(arg1,(char const *)arg2,arg3);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -36832,11 +36570,6 @@ _wrap_ncplane_vprintf(int argc, VALUE *argv, VALUE self) {
   arg3 = argv[2];
   result = (int)ruby_ncplane_vprintf(arg1,(char const *)arg2,arg3);
   vresult = SWIG_From_int((int)(result));
-  {
-    if (arg2 != NULL) {
-      vresult = INT2NUM(*arg2);
-    }
-  }
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return vresult;
 fail:
@@ -37412,6 +37145,9 @@ SWIGEXPORT void Init_notcurses(void) {
   }
   
   SWIG_RubyInitializeTrackings();
+  rb_define_const(mNotcurses, "NANOSECS_IN_SEC", SWIG_From_unsigned_SS_long((unsigned long)(1000000000ul)));
+  rb_define_const(mNotcurses, "PRIu64", SWIG_FromCharPtr(PRIu64));
+  rb_define_const(mNotcurses, "PRId64", SWIG_FromCharPtr(PRId64));
   rb_define_module_function(mNotcurses, "cdata", _wrap_cdata, -1);
   rb_define_module_function(mNotcurses, "memmove", _wrap_memmove, -1);
   
@@ -37469,6 +37205,10 @@ SWIGEXPORT void Init_notcurses(void) {
   
   rb_define_module_function(mNotcurses, "ncchannel_initializer", _wrap_ncchannel_initializer, -1);
   rb_define_module_function(mNotcurses, "ncchannels_initializer", _wrap_ncchannels_initializer, -1);
+  rb_define_module_function(mNotcurses, "ncmetricfwidth", _wrap_ncmetricfwidth, -1);
+  rb_define_module_function(mNotcurses, "ncprefixfmt", _wrap_ncprefixfmt, -1);
+  rb_define_module_function(mNotcurses, "nciprefixfmt", _wrap_nciprefixfmt, -1);
+  rb_define_module_function(mNotcurses, "ncbprefixfmt", _wrap_ncbprefixfmt, -1);
   rb_define_module_function(mNotcurses, "ruby_ncplane_vprintf_yx", _wrap_ruby_ncplane_vprintf_yx, -1);
   rb_define_module_function(mNotcurses, "ruby_ncplane_vprintf_aligned", _wrap_ruby_ncplane_vprintf_aligned, -1);
   rb_define_module_function(mNotcurses, "ruby_ncplane_vprintf_stained", _wrap_ruby_ncplane_vprintf_stained, -1);

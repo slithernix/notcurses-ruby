@@ -2,18 +2,33 @@
 
 require 'mkmf'
 
-#dir_config('notcurses')
-
-$srcs = Dir.glob('*.c')
+$srcs = Dir.glob [
+  File.dirname(__FILE__),
+  '*.c',
+].join(File::Separator)
 
 # Specify additional include directories
 notcurses_include_path = '/usr/include/notcurses'
+defines = Array.new
 
-defines = %w[
-  __x86_64__
-  __linux__
-  _ISbit
-]
+case RUBY_PLATFORM
+when /darwin/ then defines << "__APPLE__"
+when /linux/ then defines << "__linux__"
+when /mingw|mswin/ then defines << "_WIN32"
+else
+  abort "unsupported platform #{RUBY_PLATFORM}"
+end
+
+case RUBY_PLATFORM
+when /x86_64/ then defines << "__x86_64__"
+when /i386|i686/ then defines << "__i386__"
+when /aarch64|arm64/ then defines << "__ARM64__"
+when /arm/ then defines << "__ARM__"
+else
+  warn "might have issues with this architecture"
+end
+
+defines << '_ISbit'
 
 include_paths = [
   "/usr/include",
@@ -25,8 +40,22 @@ include_paths = [
   notcurses_include_path,
 ]
 
-append_cflags("-I#{notcurses_include_path}")
-swig_cmd = "swig -D#{defines.join(' -D')} -ruby -I#{include_paths.join(' -I')} notcurses.i"
+#append_cflags("-I#{notcurses_include_path}")
+#append_cflags('-Wno-old-style-definition')
+
+swig_interface_path = [
+  File.dirname(__FILE__),
+  'notcurses.i'
+].join(File::SEPARATOR)
+
+swig_cmd = [
+  'swig',
+  "-D#{defines.join(' -D')}",
+  '-ruby',
+  "-I#{include_paths.join(' -I')}",
+  swig_interface_path,
+].join(' ')
+
 puts "SWIG COMMAND IS #{swig_cmd}"
 
 `#{swig_cmd}`
@@ -34,12 +63,6 @@ unless $?.success?
   abort "swig generate command (#{swig_cmd}) failed"
 end
 
-# You can add multiple directories if needed
-# append_cflags("-I/path/to/another/include")
-
-#include_paths.each do |inc|
-#  append_cflags("-I #{inc}")
-#end
 %w[
   direct.h
   nckeys.h
