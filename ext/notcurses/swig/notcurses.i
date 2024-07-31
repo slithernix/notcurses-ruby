@@ -1,8 +1,7 @@
 %module notcurses
 
-// This should change things like notcurses_options to NotcursesOptions,
-// instead of the default Notcurses_options
-%rename("%(camelcase)s", %$isclass) "";
+%feature("autodoc", "2");
+%feature("kwargs", "1");
 
 %constant unsigned long NANOSECS_IN_SEC = 1000000000ul;
 %constant const char* PRIu64 = PRIu64;
@@ -61,21 +60,22 @@
 %include <typemaps/void.swg>
 %include <typemaps/wstring.swg>
 
+%include <ruby/ruby.swg>
 %include <ruby/argcargv.i>
 %include <ruby/rubyautodoc.swg>
 %include <ruby/file.i>
 %include <ruby/progargcargv.i>
 %include <ruby/rubycomplex.swg>
-%include <ruby/rubykw.swg>
-%include <ruby/rubymacros.swg>
 %include <ruby/rubyprimtypes.swg>
 %include <ruby/rubystrings.swg>
 %include <ruby/timeval.i>
 %include <ruby/typemaps.i>
 
+// Put Helper Functions in this block
 %{
 #include <fcntl.h>
 #include <unistd.h>
+#include <locale.h>
 
 // Helper function to determine file mode
 static const char* get_file_mode(int fd) {
@@ -91,7 +91,153 @@ static const char* get_file_mode(int fd) {
 
   return "r";
 }
+
+// Helper function to call Ruby procs
+static VALUE call_ruby_proc(VALUE proc, int argc, VALUE* argv) {
+  return rb_funcall2(proc, rb_intern("call"), argc, argv);
+}
 %}
+
+// Package all function results in a hash
+%typemap(out) SWIGTYPE*, SWIGTYPE& {
+  VALUE hash = rb_hash_new();
+  VALUE obj;
+
+  if (strcmp("$1_type", "void") == 0) {
+    obj = Qnil;
+  } else {
+    obj = SWIG_Ruby_NewPointerObj($1, $1_descriptor, $owner);
+  }
+
+  rb_hash_aset(hash, ID2SYM(rb_intern("return")), obj);
+  $result = hash;
+}
+
+%typemap(argout) SWIGTYPE*, SWIGTYPE & {
+  if ($result == Qnil) {
+    $result = rb_hash_new();
+  }
+  if (!RB_TYPE_P($result, T_HASH)) {
+    VALUE temp = rb_hash_new();
+    rb_hash_aset(temp, ID2SYM(rb_intern("return")), $result);
+    $result = temp;
+  }
+
+  swig_type_info *ty = SWIG_TypeQuery("$1_type");
+  if (!ty) ty = $1_descriptor;
+
+  VALUE obj = SWIG_NewPointerObj((void *)$1, ty, 0);
+  rb_hash_aset($result, ID2SYM(rb_intern("$1_name")), obj);
+}
+
+%typemap(out) char*, const char* {
+  VALUE hash = rb_hash_new();
+  VALUE obj;
+
+  if ($1 == NULL) {
+    obj = Qnil;
+  } else {
+    // Convert C string to Ruby string
+    obj = rb_str_new2($1);
+  }
+
+  rb_hash_aset(hash, ID2SYM(rb_intern("return")), obj);
+  $result = hash;
+}
+
+%typemap(argout) char*, const char* {
+  if ($result == Qnil) {
+    $result = rb_hash_new();
+  }
+  if (!RB_TYPE_P($result, T_HASH)) {
+    VALUE temp = rb_hash_new();
+    rb_hash_aset(temp, ID2SYM(rb_intern("return")), $result);
+    $result = temp;
+  }
+
+  VALUE obj = $1 ? rb_str_new2($1) : Qnil;
+  rb_hash_aset($result, ID2SYM(rb_intern("$1_name")), obj);
+}
+
+%typemap(out) wchar_t* {
+  VALUE hash = rb_hash_new();
+  VALUE obj;
+
+  if ($1 == NULL) {
+    obj = Qnil;
+  } else {
+    // Convert wchar_t* to UTF-8 encoded Ruby string
+    setlocale(LC_ALL, "");
+    size_t len = wcslen($1);
+    size_t utf8_len = wcstombs(NULL, $1, 0);  // Get required buffer size
+    if (utf8_len != (size_t)-1) {
+      char *utf8_str = (char*)malloc(utf8_len + 1);
+      if (utf8_str) {
+        wcstombs(utf8_str, $1, utf8_len + 1);
+        obj = rb_str_new2(utf8_str);
+        rb_enc_associate(obj, rb_utf8_encoding());
+        free(utf8_str);
+      } else {
+        obj = Qnil; // Handle allocation failure
+      }
+    } else {
+      obj = Qnil; // Handle conversion failure
+    }
+  }
+
+  rb_hash_aset(hash, ID2SYM(rb_intern("return")), obj);
+  $result = hash;
+}
+
+%typemap(argout) wchar_t* {
+  if ($result == Qnil) {
+    $result = rb_hash_new();
+  }
+  if (!RB_TYPE_P($result, T_HASH)) {
+    VALUE temp = rb_hash_new();
+    rb_hash_aset(temp, ID2SYM(rb_intern("return")), $result);
+    $result = temp;
+  }
+
+  VALUE obj;
+  if ($1 == NULL) {
+    obj = Qnil;
+  } else {
+    // Convert wchar_t* to UTF-8 encoded Ruby string
+    setlocale(LC_ALL, "");
+    size_t utf8_len = wcstombs(NULL, $1, 0);  // Get required buffer size
+    if (utf8_len != (size_t)-1) {
+      char *utf8_str = (char*)malloc(utf8_len + 1);
+      if (utf8_str) {
+        wcstombs(utf8_str, $1, utf8_len + 1);
+        obj = rb_str_new2(utf8_str);
+        rb_enc_associate(obj, rb_utf8_encoding());
+        free(utf8_str);
+      } else {
+        obj = Qnil; // Handle allocation failure
+      }
+    } else {
+      obj = Qnil; // Handle conversion failure
+    }
+  }
+
+  rb_hash_aset($result, ID2SYM(rb_intern("$1_name")), obj);
+}
+
+// Time is not on your side
+%typemap(in) const struct timespec* {
+  if ($input == Qnil) {
+    $1 = NULL;
+  } else if (rb_obj_is_kind_of($input, rb_cTime)) {
+    static struct timespec ts;
+    VALUE seconds = rb_funcall($input, rb_intern("to_f"), 0);
+    ts.tv_sec = NUM2LONG(rb_funcall(seconds, rb_intern("floor"), 0));
+    ts.tv_nsec = NUM2LONG(rb_funcall(rb_funcall(rb_funcall(seconds, rb_intern("-"), 1, seconds), rb_intern("*"), 1, INT2NUM(1000000000)), rb_intern("floor"), 0));
+    $1 = &ts;
+  } else {
+    SWIG_exception(SWIG_TypeError, "Expected Time or nil");
+  }
+}
 
 // IO
 %typemap(in) FILE* {
@@ -122,7 +268,6 @@ static const char* get_file_mode(int fd) {
     rb_funcall($result, rb_intern("binmode"), 0);
   }
 }
-
 
 %typemap(argout) FILE** {
   if (*$1 != NULL) {
@@ -193,52 +338,105 @@ static const char* get_file_mode(int fd) {
 }
 
 // Integer Pointers
-%typemap(in) int* (int temp) {
-  temp = NUM2INT($input);
-  $1 = &temp;
-}
+%typemap(in)
+  short*,
+  int*,
+  long*,
+  double*,
+  long long*,
+  int8_t*,
+  int16_t*,
+  int32_t*,
+  int64_t*,
+  unsigned short*,
+  unsigned int*,
+  unsigned long*,
+  unsigned long long*,
+  uint8_t*,
+  uint16_t*,
+  uint32_t*,
+  uint64_t* {
 
-%typemap(in) unsigned int* (unsigned int temp) {
-  temp = NUM2UINT($input);
-  $1 = &temp;
-}
-
-%typemap(in) long* (long temp) {
-  temp = NUM2LONG($input);
-  $1 = &temp;
-}
-
-%typemap(in) unsigned long* (unsigned long temp) {
-  temp = NUM2ULONG($input);
-  $1 = &temp;
-}
-
-%typemap(in) short* (short temp) {
-  temp = NUM2SHORT($input);
-  $1 = &temp;
-}
-
-%typemap(in) unsigned short* (unsigned short temp) {
-  temp = NUM2USHORT($input);
-  $1 = &temp;
-}
-
-%typemap(in) int64_t* (int64_t temp) {
-  temp = NUM2LL($input);
-  $1 = &temp;
-}
-
-%typemap(in) uint64_t* (uint64_t temp) {
-  temp = NUM2ULL($input);
-  $1 = &temp;
-}
-
-%typemap(argout) int*, unsigned int*, long*, unsigned long*, short*, unsigned short*, int64_t*, uint64_t* {
-  if ($1 != NULL) {
-    $result = INT2NUM(*$1);
+  $1 = ($1_ltype) malloc(sizeof($*1_type));
+  if ($1 == NULL) {
+    SWIG_exception_fail(SWIG_MemoryError, "Failed to allocate memory");
+  }
+  switch(sizeof($*1_type)) {
+    case 1:
+    case 2:
+    case 4:
+      *$1 = ($*1_type) NUM2INT($input);
+      break;
+    case 8:
+      if (strcmp("$*1_type", "double") == 0) {
+        *$1 = ($*1_type) NUM2DBL($input);
+      } else {
+        *$1 = ($*1_type) NUM2LL($input);
+      }
+      break;
+    default:
+      SWIG_exception_fail(SWIG_TypeError, "Unsupported integer size");
   }
 }
 
+%typemap(argout)
+  short*,
+  int*,
+  long*,
+  double*,
+  long long*,
+  int8_t*,
+  int16_t*,
+  int32_t*,
+  int64_t*,
+  size_t*,
+  unsigned short*,
+  unsigned int*,
+  unsigned long*,
+  unsigned long long*,
+  uint8_t*,
+  uint16_t*,
+  uint32_t*,
+  uint64_t* {
+
+  if ($1 != NULL) {
+    if ($result == Qnil) {
+      $result = rb_hash_new();
+    } else if (!RB_TYPE_P($result, T_HASH)) {
+      VALUE temp = rb_hash_new();
+      rb_hash_aset(temp, ID2SYM(rb_intern("return")), $result);
+      $result = temp;
+    }
+    VALUE converted_value;
+    switch(sizeof($*1_type)) {
+      case 1:
+      case 2:
+      case 4:
+        converted_value = INT2NUM(*$1);
+        break;
+      case 8:
+        if (strcmp("$*1_type", "double") == 0) {
+          converted_value = DBL2NUM(*$1);
+        } else {
+          converted_value = LL2NUM(*$1);
+        }
+        break;
+      default:
+        rb_raise(rb_eTypeError, "Unsupported integer size");
+    }
+    rb_hash_aset($result, ID2SYM(rb_intern("$1_name")), converted_value);
+    free($1);
+  }
+}
+
+// Callbacks
+%typemap(in) fadecb, ncstreamcb, tabletcb, tabcb, ncfdplane_done_cb {
+  if (!NIL_P($input)) {
+    $1 = ($1_ltype)rb_proc_new((VALUE (*)(ANYARGS))call_ruby_proc, $input);
+  } else {
+    $1 = NULL;
+  }
+}
 
 // Stuff in the inline block is both written to the generated C code AND has
 // swig wrappers generated for the functions.
@@ -298,8 +496,38 @@ int ncbprefixfmt(const char* x) {
   return (int)ncmetricfwidth(x, NCBPREFIXCOLUMNS);
 }
 
+// NCCELL_INITIALIZER
+void nccell_initializer(nccell* cell, uint32_t c, uint16_t s, uint64_t chan) {
+  if (cell == NULL) return;
+  cell->gcluster = htole(c);
+  cell->gcluster_backstop = 0;
+  cell->width = (uint8_t)((wcwidth(c) < 0 || !c) ? 1 : wcwidth(c));
+  cell->stylemask = s;
+  cell->channels = chan;
+}
+
+// NCCELL_CHAR_INITIALIZER
+void nccell_char_initializer(nccell* cell, uint32_t c) {
+  if (cell == NULL) return;
+  cell->gcluster = htole(c);
+  cell->gcluster_backstop = 0;
+  cell->width = (uint8_t)((wcwidth(c) < 0 || !c) ? 1 : wcwidth(c));
+  cell->stylemask = 0;
+  cell->channels = 0;
+}
+
+// NCCELL_TRIVIAL_INITIALIZER
+void nccell_trivial_initializer(nccell* cell) {
+  if (cell == NULL) return;
+  cell->gcluster = 0;
+  cell->gcluster_backstop = 0;
+  cell->width = 1;
+  cell->stylemask = 0;
+  cell->channels = 0;
+}
+
 // Prototypes for functions that replace va_list arg functions, actual
-// definitions are in .c files in this current directory.
+// definitions are in .c files in ../src
 int ruby_ncplane_vprintf_yx(struct ncplane* n, int y, int x, const char* format, VALUE rb_args);
 int ruby_ncplane_vprintf_aligned(struct ncplane* n, int y, ncalign_e align, const char* format, VALUE rb_args);
 int ruby_ncplane_vprintf_stained(struct ncplane* n, const char* format, VALUE rb_args);
@@ -321,15 +549,4 @@ int ruby_ncplane_vprintf(struct ncplane* n, const char* format, VALUE rb_args) {
 %include <notcurses/ncseqs.h>
 %include <notcurses/notcurses.h>
 %include <notcurses/direct.h>
-
-%rename("ncplane_vprintf_yx") ruby_ncplane_vprintf_yx;
-%rename("ncplane_vprintf_aligned") ruby_ncplane_vprintf_aligned;
-%rename("ncplane_vprintf_stained") ruby_ncplane_vprintf_stained;
-%rename("ncplane_vprintf") ruby_ncplane_vprintf;
-
-// Still a little unsure why I need the prototypes in two places, oh well
-int ruby_ncplane_vprintf_yx(struct ncplane* n, int y, int x, const char* format, VALUE rb_args);
-int ruby_ncplane_vprintf_aligned(struct ncplane* n, int y, ncalign_e align, const char* format, VALUE rb_args);
-int ruby_ncplane_vprintf_stained(struct ncplane* n, const char* format, VALUE rb_args);
-int ruby_ncplane_vprintf(struct ncplane* n, const char* format, VALUE rb_args);
 

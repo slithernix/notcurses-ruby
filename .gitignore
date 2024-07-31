@@ -37,6 +37,7 @@ yarn-error.log*
 .[a-z][a-z][a-z]
 *.un~
 .netrwhist
+tmp/
 
 # JetBrains
 .idea
