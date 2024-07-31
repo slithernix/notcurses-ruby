@@ -27,7 +27,7 @@ module Notcurses
 
   # "Mixin' the Swiiiggssss" -- Pauly Shore
   constants.each do |const_name|
-    const = mod.const_get(const_name)
+    const = const_get(const_name)
     if const.is_a?(Class) && swig_generated_class?(const)
       const.include(SwigMixins::StructInitializer)
       const.include(SwigMixins::ToH)
