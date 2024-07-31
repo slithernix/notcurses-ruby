@@ -1,0 +1,43 @@
+#!/usr/bin/env ruby
+
+require 'notcurses'
+require 'rubygems'
+
+def find_gem_directory(gem_name)
+  spec = Gem::Specification.find_by_name(gem_name)
+  spec.gem_dir
+rescue Gem::LoadError
+  puts "Gem '#{gem_name}' is not installed."
+  nil
+end
+
+include Notcurses
+
+data_dir = File.join [
+  find_gem_directory('notcurses'),
+  'data',
+]
+
+movfile = File.join [
+  data_dir,
+  'notcursesIII.mov',
+]
+
+ncroot_opts = NotcursesOptions.new
+ncroot = notcurses_init(ncroot_opts, STDOUT)
+stdp = notcurses_stdplane_const(ncroot)
+
+ncv = ncvisual_from_file(movfile)[:return]
+rows = ncplane_dim_y(std)[:return]
+cols = ncplane_dim_x(std)[:return]
+
+ncv_opts = NcvisualOptions.new(
+  n: std,
+  scaling: NCSCALE_STRETCH,
+  flags: NCVISUAL_OPTION_NOINTERPOLATE
+)
+
+ncv_plane = ncvisual_blit(ncroot, ncv, ncv_opts)
+notcurses_render(ncroot)
+$stdin.getch
+notcurses_stop

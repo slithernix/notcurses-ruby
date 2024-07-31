@@ -3,10 +3,9 @@
 # Temporarily suppress warnings to kill allocator warnings, should be fixed
 # in SWIG 4.2
 $VERBOSE = nil
+require 'notcurses.so'
 
 require_relative 'notcurses/version'
-require_relative 'notcurses/notcurses.so'
-
 require_relative 'notcurses/swig_mixins/struct_initializer'
 require_relative 'notcurses/swig_mixins/to_h'
 
