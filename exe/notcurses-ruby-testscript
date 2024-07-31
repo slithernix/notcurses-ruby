@@ -24,20 +24,34 @@ movfile = File.join [
 ]
 
 ncroot_opts = NotcursesOptions.new
-ncroot = notcurses_init(ncroot_opts, STDOUT)
-stdp = notcurses_stdplane_const(ncroot)
+ncroot = notcurses_init(ncroot_opts, STDOUT)[:return]
+
+at_exit do
+  notcurses_stop(ncroot) if ncroot
+
+  if $! && !$!.is_a?(SystemExit)
+    puts "An uncaught exception occurred: #{$!.inspect}"
+    puts "Backtrace:"
+    puts $!.backtrace
+  end
+end
+
+stdp = notcurses_stdplane_const(ncroot)[:return]
 
 ncv = ncvisual_from_file(movfile)[:return]
-rows = ncplane_dim_y(std)[:return]
-cols = ncplane_dim_x(std)[:return]
+rows = ncplane_dim_y(stdp)[:return]
+cols = ncplane_dim_x(stdp)[:return]
 
 ncv_opts = NcvisualOptions.new(
-  n: std,
+  n: stdp,
   scaling: NCSCALE_STRETCH,
   flags: NCVISUAL_OPTION_NOINTERPOLATE
 )
 
 ncv_plane = ncvisual_blit(ncroot, ncv, ncv_opts)
+ncplane_putwstr_aligned(stdp, rows / 2, NCALIGN_CENTER, "😺 IT WOOORRKKSSS 😺")
+ncplane_putwstr_aligned(stdp, (rows / 2) + 1, NCALIGN_CENTER, "😺 PRESS ANY KEY TO EXIT 😺")
 notcurses_render(ncroot)
-$stdin.getch
-notcurses_stop
+
+ch = Ncinput.new
+notcurses_get(ncroot, Time.now, ch)

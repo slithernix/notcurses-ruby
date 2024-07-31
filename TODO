@@ -1,3 +1,7 @@
+* Fix timespec typemaps
+
+  Clearly not working right, test with notcurses_get.
+
 * Split SWIG generation off into its own task
 
   Right now it's kind of just assumed in extconf.rb,

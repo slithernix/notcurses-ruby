@@ -13,6 +13,8 @@ stdplane_const gets a new memory address every call. I was under the
 impression this should return a constant address. Need to look into it
 more.
 
+Timespecs are broken.
+
 I'd also love to figure out how to build a type-checking mechanism
 between SWIG and Ruby because it's really easy to coredump right now.
 
